@@ -1,0 +1,186 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@drawable/gradient_background">
+
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:fillViewport="true">
+
+        <androidx.constraintlayout.widget.ConstraintLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:padding="24dp">
+
+            <!-- Logo Icon -->
+            <ImageView
+                android:id="@+id/ivLogo"
+                android:layout_width="100dp"
+                android:layout_height="100dp"
+                android:layout_marginTop="60dp"
+                android:src="@android:drawable/ic_dialog_info"
+                android:tint="#FFFFFF"
+                app:layout_constraintTop_toTopOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintEnd_toEndOf="parent" />
+
+            <!-- App Name -->
+            <TextView
+                android:id="@+id/tvAppName"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Welcome Back"
+                android:textSize="36sp"
+                android:textStyle="bold"
+                android:textColor="#FFFFFF"
+                android:layout_marginTop="16dp"
+                android:shadowColor="#40000000"
+                android:shadowDx="0"
+                android:shadowDy="2"
+                android:shadowRadius="4"
+                app:layout_constraintTop_toBottomOf="@id/ivLogo"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintEnd_toEndOf="parent" />
+
+            <TextView
+                android:id="@+id/tvSubtitle"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Sign in to continue shopping"
+                android:textSize="16sp"
+                android:textColor="@color/white_transparent"
+                android:layout_marginTop="8dp"
+                app:layout_constraintTop_toBottomOf="@id/tvAppName"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintEnd_toEndOf="parent" />
+
+            <!-- White Card Container -->
+            <androidx.cardview.widget.CardView
+                android:id="@+id/cardContainer"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="40dp"
+                app:cardCornerRadius="24dp"
+                app:cardElevation="8dp"
+                app:layout_constraintTop_toBottomOf="@id/tvSubtitle"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintEnd_toEndOf="parent">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:padding="24dp">
+
+                    <!-- Username Input -->
+                    <com.google.android.material.textfield.TextInputLayout
+                        android:id="@+id/tilUsername"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:hint="Username"
+                        style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
+                        app:startIconDrawable="@android:drawable/ic_menu_sort_by_size"
+                        app:startIconTint="@color/orange_primary"
+                        app:boxStrokeColor="@color/orange_primary"
+                        app:hintTextColor="@color/orange_primary">
+
+                        <com.google.android.material.textfield.TextInputEditText
+                            android:id="@+id/etUsername"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:inputType="text"
+                            android:maxLines="1"
+                            android:textColor="@color/text_dark"
+                            android:textSize="16sp" />
+                    </com.google.android.material.textfield.TextInputLayout>
+
+                    <!-- Password Input -->
+                    <com.google.android.material.textfield.TextInputLayout
+                        android:id="@+id/tilPassword"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="16dp"
+                        android:hint="Password"
+                        style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
+                        app:startIconDrawable="@android:drawable/ic_lock_lock"
+                        app:startIconTint="@color/orange_primary"
+                        app:endIconMode="password_toggle"
+                        app:endIconTint="@color/orange_primary"
+                        app:boxStrokeColor="@color/orange_primary"
+                        app:hintTextColor="@color/orange_primary">
+
+                        <com.google.android.material.textfield.TextInputEditText
+                            android:id="@+id/etPassword"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:inputType="textPassword"
+                            android:maxLines="1"
+                            android:textColor="@color/text_dark"
+                            android:textSize="16sp" />
+                    </com.google.android.material.textfield.TextInputLayout>
+
+                    <!-- Login Button -->
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btnLogin"
+                        android:layout_width="match_parent"
+                        android:layout_height="60dp"
+                        android:layout_marginTop="32dp"
+                        android:text="Login"
+                        android:textSize="18sp"
+                        android:textStyle="bold"
+                        android:textColor="#FFFFFF"
+                        android:backgroundTint="@color/orange_primary"
+                        app:cornerRadius="30dp"
+                        app:elevation="4dp" />
+
+                    <!-- Progress Bar -->
+                    <ProgressBar
+                        android:id="@+id/progressBar"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_gravity="center"
+                        android:layout_marginTop="16dp"
+                        android:visibility="gone"
+                        android:indeterminateTint="@color/orange_primary" />
+
+                </LinearLayout>
+            </androidx.cardview.widget.CardView>
+
+            <!-- Register Link -->
+            <LinearLayout
+                android:id="@+id/llRegisterLink"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="24dp"
+                android:orientation="horizontal"
+                app:layout_constraintTop_toBottomOf="@id/cardContainer"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintEnd_toEndOf="parent">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Don't have an account? "
+                    android:textSize="15sp"
+                    android:textColor="@color/white_transparent" />
+
+                <TextView
+                    android:id="@+id/tvRegister"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Sign Up"
+                    android:textSize="15sp"
+                    android:textStyle="bold"
+                    android:textColor="#FFFFFF"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:background="?attr/selectableItemBackground"
+                    android:padding="4dp" />
+            </LinearLayout>
+
+        </androidx.constraintlayout.widget.ConstraintLayout>
+    </ScrollView>
+</FrameLayout>
