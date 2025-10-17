@@ -2,30 +2,47 @@ package com.example.prm392_frontend;
 
 import android.content.Intent;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.View;
+import android.widget.ProgressBar;
+import android.widget.TextView;
+import android.widget.Toast;
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.SearchView;
 import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
+import com.example.prm392_frontend.api.ApiClient;
+import com.example.prm392_frontend.models.CategoryResponse;
+import com.example.prm392_frontend.models.ProductResponse;
+import com.example.prm392_frontend.utils.AuthHelper;
+import com.example.prm392_frontend.utils.ProductMapper;
 import com.google.android.material.appbar.MaterialToolbar;
-import com.google.android.material.chip.Chip;
-import com.google.android.material.chip.ChipGroup;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
 
 public class ProductListActivity extends AppCompatActivity {
+
+    private static final String TAG = "ProductListActivity";
 
     private RecyclerView recyclerView;
     private ProductAdapter adapter;
     private List<Product> allProducts;
     private List<Product> filteredProducts;
+    private List<String> categoryNames;
     private MaterialToolbar toolbar;
-    private ChipGroup filterChips;
+    private ProgressBar progressBar;
+    private TextView errorText;
+    private AuthHelper authHelper;
     private String currentCategory = "All";
     private String currentSort = "None";
     private String searchQuery = "";
@@ -35,14 +52,18 @@ public class ProductListActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_product_list);
 
+        authHelper = new AuthHelper(this);
+
         toolbar = findViewById(R.id.toolbar);
         recyclerView = findViewById(R.id.products_recycler_view);
-        filterChips = findViewById(R.id.filter_chips);
+        progressBar = findViewById(R.id.progress_bar);
+        errorText = findViewById(R.id.error_text);
 
         recyclerView.setLayoutManager(new GridLayoutManager(this, 2));
 
-        allProducts = ProductDataSource.getProducts();
-        filteredProducts = new ArrayList<>(allProducts);
+        allProducts = new ArrayList<>();
+        filteredProducts = new ArrayList<>();
+        categoryNames = new ArrayList<>();
 
         adapter = new ProductAdapter(filteredProducts, product -> {
             Intent intent = new Intent(ProductListActivity.this, ProductDetailsActivity.class);
@@ -54,12 +75,22 @@ public class ProductListActivity extends AppCompatActivity {
         recyclerView.setAdapter(adapter);
 
         setupToolbar();
-        setupFilterChips();
+
+        // Fetch categories first, then products
+        fetchCategoriesFromApi();
     }
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         getMenuInflater().inflate(R.menu.menu_product_list, menu);
+
+        // Update Login/Logout menu item based on auth state
+        MenuItem authItem = menu.findItem(R.id.action_auth);
+        if (authHelper.isLoggedIn()) {
+            authItem.setTitle("Logout");
+        } else {
+            authItem.setTitle("Login");
+        }
 
         MenuItem searchItem = menu.findItem(R.id.action_search);
         SearchView searchView = (SearchView) searchItem.getActionView();
@@ -90,7 +121,10 @@ public class ProductListActivity extends AppCompatActivity {
         setSupportActionBar(toolbar);
         toolbar.setOnMenuItemClickListener(item -> {
             int id = item.getItemId();
-            if (id == R.id.action_sort) {
+            if (id == R.id.action_auth) {
+                handleAuthAction();
+                return true;
+            } else if (id == R.id.action_sort) {
                 showSortDialog();
                 return true;
             } else if (id == R.id.action_filter) {
@@ -101,28 +135,37 @@ public class ProductListActivity extends AppCompatActivity {
         });
     }
 
-    private void setupFilterChips() {
-        filterChips.setOnCheckedStateChangeListener((group, checkedIds) -> {
-            if (checkedIds.isEmpty()) return;
-
-            int checkedId = checkedIds.get(0);
-            if (checkedId == R.id.chip_all) {
-                currentCategory = "All";
-            } else if (checkedId == R.id.chip_electronics) {
-                currentCategory = "Electronics";
-            } else if (checkedId == R.id.chip_sports) {
-                currentCategory = "Sports";
-            } else if (checkedId == R.id.chip_fashion) {
-                currentCategory = "Fashion";
-            } else if (checkedId == R.id.chip_home) {
-                currentCategory = "Home";
-            }
-            applyFiltersAndSort();
-        });
+    private void handleAuthAction() {
+        if (authHelper.isLoggedIn()) {
+            // Logout
+            new AlertDialog.Builder(this)
+                    .setTitle("Logout")
+                    .setMessage("Are you sure you want to logout?")
+                    .setPositiveButton("Logout", (dialog, which) -> {
+                        authHelper.logout();
+                        Toast.makeText(this, "Logged out successfully", Toast.LENGTH_SHORT).show();
+                        // Refresh menu to show Login
+                        invalidateOptionsMenu();
+                    })
+                    .setNegativeButton("Cancel", null)
+                    .show();
+        } else {
+            // Login - navigate to LoginActivity
+            Intent intent = new Intent(ProductListActivity.this, LoginActivity.class);
+            startActivity(intent);
+        }
     }
 
+    @Override
+    protected void onResume() {
+        super.onResume();
+        // Refresh menu when returning to this activity (in case user logged in)
+        invalidateOptionsMenu();
+    }
+
+
     private void showSortDialog() {
-        String[] sortOptions = {"Price: Low to High", "Price: High to Low", "Rating: High to Low", "Popularity"};
+        String[] sortOptions = {"Price: Low to High", "Price: High to Low"};
         new AlertDialog.Builder(this)
                 .setTitle("Sort By")
                 .setItems(sortOptions, (dialog, which) -> {
@@ -133,7 +176,13 @@ public class ProductListActivity extends AppCompatActivity {
     }
 
     private void showFilterDialog() {
-        String[] filterOptions = {"All", "Electronics", "Sports", "Fashion", "Home"};
+        // Build filter options: "All" + categories
+        List<String> filterOptionsList = new ArrayList<>();
+        filterOptionsList.add("All");
+        filterOptionsList.addAll(categoryNames);
+
+        String[] filterOptions = filterOptionsList.toArray(new String[0]);
+
         int currentIndex = 0;
         for (int i = 0; i < filterOptions.length; i++) {
             if (filterOptions[i].equals(currentCategory)) {
@@ -146,31 +195,10 @@ public class ProductListActivity extends AppCompatActivity {
                 .setTitle("Filter by Category")
                 .setSingleChoiceItems(filterOptions, currentIndex, (dialog, which) -> {
                     currentCategory = filterOptions[which];
-                    updateChipSelection();
                     applyFiltersAndSort();
                     dialog.dismiss();
                 })
                 .show();
-    }
-
-    private void updateChipSelection() {
-        switch (currentCategory) {
-            case "All":
-                filterChips.check(R.id.chip_all);
-                break;
-            case "Electronics":
-                filterChips.check(R.id.chip_electronics);
-                break;
-            case "Sports":
-                filterChips.check(R.id.chip_sports);
-                break;
-            case "Fashion":
-                filterChips.check(R.id.chip_fashion);
-                break;
-            case "Home":
-                filterChips.check(R.id.chip_home);
-                break;
-        }
     }
 
     private void applyFiltersAndSort() {
@@ -202,12 +230,6 @@ public class ProductListActivity extends AppCompatActivity {
             case "Price: High to Low":
                 Collections.sort(filteredProducts, (p1, p2) -> Double.compare(p2.getPrice(), p1.getPrice()));
                 break;
-            case "Rating: High to Low":
-                Collections.sort(filteredProducts, (p1, p2) -> Double.compare(p2.getRating(), p1.getRating()));
-                break;
-            case "Popularity":
-                Collections.sort(filteredProducts, (p1, p2) -> Integer.compare(p2.getPopularity(), p1.getPopularity()));
-                break;
         }
 
         adapter = new ProductAdapter(filteredProducts, product -> {
@@ -217,6 +239,87 @@ public class ProductListActivity extends AppCompatActivity {
             overridePendingTransition(R.anim.slide_in_right, R.anim.slide_out_left);
         });
         recyclerView.setAdapter(adapter);
+    }
+
+    private void fetchCategoriesFromApi() {
+        ApiClient.getProductApi().getAllCategories().enqueue(new Callback<List<CategoryResponse>>() {
+            @Override
+            public void onResponse(@NonNull Call<List<CategoryResponse>> call, @NonNull Response<List<CategoryResponse>> response) {
+                if (response.isSuccessful() && response.body() != null) {
+                    categoryNames.clear();
+                    for (CategoryResponse category : response.body()) {
+                        categoryNames.add(category.getCategoryName());
+                    }
+                    Log.d(TAG, "Fetched " + categoryNames.size() + " categories from API");
+
+                    // Now fetch products
+                    fetchProductsFromApi();
+                } else {
+                    Log.e(TAG, "Failed to fetch categories: " + response.code());
+                    // Still try to fetch products even if categories fail
+                    fetchProductsFromApi();
+                }
+            }
+
+            @Override
+            public void onFailure(@NonNull Call<List<CategoryResponse>> call, @NonNull Throwable t) {
+                Log.e(TAG, "Categories API call failed", t);
+                // Still try to fetch products even if categories fail
+                fetchProductsFromApi();
+            }
+        });
+    }
+
+    private void fetchProductsFromApi() {
+        showLoading(true);
+
+        ApiClient.getProductApi().getAllProducts().enqueue(new Callback<List<ProductResponse>>() {
+            @Override
+            public void onResponse(@NonNull Call<List<ProductResponse>> call, @NonNull Response<List<ProductResponse>> response) {
+                showLoading(false);
+
+                if (response.isSuccessful() && response.body() != null) {
+                    List<ProductResponse> productResponses = response.body();
+
+                    // Convert API response to Product models
+                    allProducts = ProductMapper.fromResponseList(productResponses);
+                    filteredProducts = new ArrayList<>(allProducts);
+
+                    Log.d(TAG, "Fetched " + allProducts.size() + " products from API");
+
+                    // Update adapter
+                    applyFiltersAndSort();
+
+                    if (allProducts.isEmpty()) {
+                        showError("No products available");
+                    }
+                } else {
+                    Log.e(TAG, "API response not successful: " + response.code());
+                    showError("Failed to load products (Error " + response.code() + ")");
+                }
+            }
+
+            @Override
+            public void onFailure(@NonNull Call<List<ProductResponse>> call, @NonNull Throwable t) {
+                showLoading(false);
+                Log.e(TAG, "API call failed", t);
+                showError("Network error: " + t.getMessage());
+                Toast.makeText(ProductListActivity.this, "Failed to fetch products: " + t.getMessage(), Toast.LENGTH_LONG).show();
+            }
+        });
+    }
+
+    private void showLoading(boolean isLoading) {
+        progressBar.setVisibility(isLoading ? View.VISIBLE : View.GONE);
+        recyclerView.setVisibility(isLoading ? View.GONE : View.VISIBLE);
+        errorText.setVisibility(View.GONE);
+    }
+
+    private void showError(String message) {
+        errorText.setText(message);
+        errorText.setVisibility(View.VISIBLE);
+        recyclerView.setVisibility(View.GONE);
+        progressBar.setVisibility(View.GONE);
     }
 
     @Override

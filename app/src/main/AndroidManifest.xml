@@ -20,9 +20,9 @@
         android:usesCleartextTraffic="true">
 
 
-        <!-- Activity bản đồ -->
+        <!-- Launcher: Product List -->
         <activity
-            android:name=".MainActivity"
+            android:name=".ProductListActivity"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN"/>
@@ -30,6 +30,23 @@
             </intent-filter>
         </activity>
 
+        <!-- Auth Activities -->
+        <activity
+            android:name=".LoginActivity"
+            android:exported="false"
+            android:windowSoftInputMode="adjustResize" />
+
+        <activity
+            android:name=".RegisterActivity"
+            android:exported="false"
+            android:windowSoftInputMode="adjustResize" />
+
+        <!-- Main Activity -->
+        <activity
+            android:name=".MainActivity"
+            android:exported="false" />
+
+        <!-- Product Activities -->
         <activity
             android:name=".ProductDetailsActivity"
             android:exported="false" />

@@ -29,12 +29,6 @@ public class LoginActivity extends AppCompatActivity {
 
         sharedPreferences = getSharedPreferences("auth_prefs", MODE_PRIVATE);
 
-        // Check if user is already logged in
-        if (isLoggedIn()) {
-            navigateToMain();
-            return;
-        }
-
         setupListeners();
     }
 
@@ -84,7 +78,15 @@ public class LoginActivity extends AppCompatActivity {
                     Toast.makeText(LoginActivity.this, "Login successful!", Toast.LENGTH_SHORT).show();
                     navigateToMain();
                 } else {
-                    Toast.makeText(LoginActivity.this, "Login failed: Invalid credentials", Toast.LENGTH_SHORT).show();
+                    String errorMsg = "Login failed: ";
+                    if (response.code() == 401) {
+                        errorMsg += "Invalid username or password";
+                    } else if (response.code() == 404) {
+                        errorMsg += "User not found";
+                    } else {
+                        errorMsg += "Error code " + response.code();
+                    }
+                    Toast.makeText(LoginActivity.this, errorMsg, Toast.LENGTH_LONG).show();
                 }
             }
 
@@ -110,10 +112,18 @@ public class LoginActivity extends AppCompatActivity {
     }
 
     private void navigateToMain() {
-        Intent intent = new Intent(LoginActivity.this, MainActivity.class);
-        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
-        startActivity(intent);
-        finish();
+        // Check if we came from ProductDetailsActivity
+        boolean returnToProduct = getIntent().getBooleanExtra("return_to_product", false);
+
+        if (returnToProduct) {
+            // Return to ProductDetailsActivity with success result
+            setResult(RESULT_OK);
+            finish();
+        } else {
+            // Normal login flow - just finish and return to previous activity (ProductListActivity)
+            // Since ProductListActivity is the LAUNCHER, it will be in the back stack
+            finish();
+        }
     }
 
     private void setLoading(boolean isLoading) {

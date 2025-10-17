@@ -63,31 +63,22 @@ public class ProductAdapter extends RecyclerView.Adapter<ProductAdapter.ProductV
     static class ProductViewHolder extends RecyclerView.ViewHolder {
         private ImageView productImage;
         private TextView productName;
-        private TextView productRating;
         private TextView productPrice;
-        private TextView productSold;
 
         public ProductViewHolder(@NonNull View itemView) {
             super(itemView);
             productImage = itemView.findViewById(R.id.product_image);
             productName = itemView.findViewById(R.id.product_name);
-            productRating = itemView.findViewById(R.id.product_rating);
             productPrice = itemView.findViewById(R.id.product_price);
-            productSold = itemView.findViewById(R.id.product_sold);
         }
 
         public void bind(Product product, OnProductClickListener listener) {
             productName.setText(product.getName());
-            productRating.setText(String.format(Locale.getDefault(), "%.1f", product.getRating()));
 
             // Format currency with thousand separators
             NumberFormat currencyFormat = NumberFormat.getInstance(new Locale("vi", "VN"));
-            String formattedPrice = "₫" + currencyFormat.format(product.getPrice() * 1000);
+            String formattedPrice = "₫" + currencyFormat.format(product.getPrice());
             productPrice.setText(formattedPrice);
-
-            // Calculate random sold count for demo (you can add this to Product model later)
-            int soldCount = (int) (Math.random() * 500) + 50;
-            productSold.setText(String.format(Locale.getDefault(), "%d đã bán", soldCount));
 
             // Load image from URL using Glide
             Glide.with(productImage.getContext())
