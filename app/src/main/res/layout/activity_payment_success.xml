@@ -52,16 +52,16 @@
         app:layout_constraintTop_toBottomOf="@+id/textViewSuccessTitle" />
 
     <!-- Nút quay về trang chủ -->
+    <!-- Thêm Button này vào cuối file activity_payment.xml, trước thẻ đóng </androidx.constraintlayout.widget.ConstraintLayout> -->
     <Button
-        android:id="@+id/buttonBackToHome"
-        android:layout_width="0dp"
+        android:id="@+id/buttonGoToProductList"
+        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginBottom="16dp"
-        android:padding="12dp"
-        android:text="Quay về trang chủ"
-        android:textSize="18sp"
+        android:text="Go back to HomePage"
         app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent" />
+        android:layout_marginBottom="32dp" />
+
 
 </androidx.constraintlayout.widget.ConstraintLayout>

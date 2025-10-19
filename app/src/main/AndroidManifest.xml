@@ -22,7 +22,7 @@
 
         <!-- Activity bản đồ -->
         <activity
-            android:name=".MainActivity"
+            android:name=".PaymentSuccessActivity"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN"/>
@@ -31,7 +31,7 @@
         </activity>
 
         <activity
-            android:name=".ProductDetailsActivity"
+            android:name=".ProductListActivity"
             android:exported="false" />
 
     </application>
