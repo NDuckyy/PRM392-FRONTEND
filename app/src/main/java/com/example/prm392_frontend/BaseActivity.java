@@ -51,10 +51,9 @@ public abstract class BaseActivity extends AppCompatActivity {
                     // }
                     return true;
                 } else if (itemId == R.id.nav_profile) {
-                    // TODO: Uncomment when UserProfileActivity is created
-                    // if (!(this instanceof UserProfileActivity)) {
-                    //     navigateToActivity(UserProfileActivity.class);
-                    // }
+                     if (!(this instanceof UserProfileActivity)) {
+                         navigateToActivity(UserProfileActivity.class);
+                     }
                     return true;
                 }
                 return false;
@@ -72,9 +71,9 @@ public abstract class BaseActivity extends AppCompatActivity {
             navigationBar.setSelectedItemId(R.id.nav_products);
         }
         // TODO: Uncomment when UserProfileActivity is created
-        // else if (this instanceof UserProfileActivity) {
-        //     navigationBar.setSelectedItemId(R.id.nav_profile);
-        // }
+         else if (this instanceof UserProfileActivity) {
+             navigationBar.setSelectedItemId(R.id.nav_profile);
+         }
     }
 
     private void navigateToActivity(Class<?> activityClass) {
