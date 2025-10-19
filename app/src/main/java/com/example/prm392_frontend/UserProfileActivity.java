@@ -30,8 +30,10 @@ import java.util.TimeZone;
 import okhttp3.Call;
 import okhttp3.Callback;
 import okhttp3.HttpUrl;
+import okhttp3.MediaType;            // <-- NEW
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
+import okhttp3.RequestBody;          // <-- NEW
 import okhttp3.Response;
 import okhttp3.logging.HttpLoggingInterceptor;
 
@@ -41,6 +43,9 @@ public class UserProfileActivity extends BaseActivity {
     private static final String API_ORDERS  = "https://prm392-backend.nducky.id.vn/api/order";
     private static final String API_PROFILE = "https://prm392-backend.nducky.id.vn/api/users/profile";
     private static final String TAG = "UserProfileActivity";
+
+    // NEW: MediaType cho JSON
+    private static final MediaType JSON = MediaType.get("application/json; charset=utf-8");
 
     private ActivityUserProfileBinding ui;
     private final Gson gson = new Gson();
@@ -106,8 +111,8 @@ public class UserProfileActivity extends BaseActivity {
                 currentUser.email = text(ui.edtEmail);
                 currentUser.phoneNumber = text(ui.edtPhone);
                 currentUser.address = text(ui.edtAddress);
-                Toast.makeText(this, "Saved (local)!", Toast.LENGTH_SHORT).show();
-                setEditMode(false);
+                // Gọi API cập nhật (thay vì chỉ lưu local)
+                updateProfile(currentUser);
             } else {
                 setEditMode(true);
             }
@@ -120,8 +125,8 @@ public class UserProfileActivity extends BaseActivity {
             currentUser.email = text(ui.edtEmail);
             currentUser.phoneNumber = text(ui.edtPhone);
             currentUser.address = text(ui.edtAddress);
-            Toast.makeText(this, "Saved (local)!", Toast.LENGTH_SHORT).show();
-            setEditMode(false);
+            // Gọi API cập nhật (thay vì chỉ lưu local)
+            updateProfile(currentUser);
         });
     }
 
@@ -219,6 +224,79 @@ public class UserProfileActivity extends BaseActivity {
                 }
             }
         });
+    }
+
+    // NEW: cập nhật profile qua API PUT
+    private void updateProfile(UserProfile u) {
+        try {
+            // Payload theo spec:
+            // { "email": "...", "phoneNumber": "...", "address": "..." }
+            JsonObject payload = new JsonObject();
+            payload.addProperty("email", safe(u.email));
+            payload.addProperty("phoneNumber", safe(u.phoneNumber));
+            payload.addProperty("address", safe(u.address));
+
+            RequestBody rb = RequestBody.create(gson.toJson(payload), JSON);
+
+            Request req = new Request.Builder()
+                    .url(HttpUrl.parse(API_PROFILE))
+                    .put(rb)
+                    // Authorization tự gắn bởi AuthInterceptor
+                    .build();
+
+            // Khóa nút khi đang gửi yêu cầu
+            runOnUiThread(() -> {
+                ui.fabEditSave.setEnabled(false);
+                ui.btnSave.setEnabled(false);
+            });
+
+            http.newCall(req).enqueue(new Callback() {
+                @Override public void onFailure(Call call, IOException e) {
+                    Log.e(TAG, "💥 updateProfile(): failure " + e.getMessage(), e);
+                    runOnUiThread(() -> {
+                        ui.fabEditSave.setEnabled(true);
+                        ui.btnSave.setEnabled(true);
+                        Toast.makeText(UserProfileActivity.this, "Cập nhật lỗi: " + e.getMessage(), Toast.LENGTH_LONG).show();
+                    });
+                }
+
+                @Override public void onResponse(Call call, Response resp) throws IOException {
+                    String body = resp.body() != null ? resp.body().string() : "";
+                    Log.i(TAG, "✅ updateProfile(): code=" + resp.code() + ", body=" + body);
+
+                    if (!resp.isSuccessful()) {
+                        String msg = "Cập nhật thất bại: " + resp.code();
+                        try {
+                            JsonObject root = gson.fromJson(body, JsonObject.class);
+                            if (root != null && root.has("message") && root.get("message").isJsonPrimitive()) {
+                                msg = root.get("message").getAsString();
+                            }
+                        } catch (Exception ignore) { }
+                        final String finalMsg = msg;
+                        runOnUiThread(() -> {
+                            ui.fabEditSave.setEnabled(true);
+                            ui.btnSave.setEnabled(true);
+                            Toast.makeText(UserProfileActivity.this, finalMsg, Toast.LENGTH_LONG).show();
+                        });
+                        return;
+                    }
+
+                    runOnUiThread(() -> {
+                        Toast.makeText(UserProfileActivity.this, "Cập nhật thành công!", Toast.LENGTH_SHORT).show();
+                        setEditMode(false);
+                        ui.fabEditSave.setEnabled(true);
+                        ui.btnSave.setEnabled(true);
+                    });
+
+                    // Tải lại profile để hiển thị dữ liệu mới nhất
+                    fetchProfile();
+                }
+            });
+        } catch (Exception ex) {
+            Log.e(TAG, "💥 updateProfile(): error " + ex.getMessage(), ex);
+            runOnUiThread(() ->
+                    Toast.makeText(UserProfileActivity.this, "Có lỗi khi chuẩn bị yêu cầu", Toast.LENGTH_LONG).show());
+        }
     }
 
     private void fillUser(UserProfile u) {
