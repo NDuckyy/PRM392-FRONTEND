@@ -5,14 +5,14 @@ import android.text.TextUtils;
 import android.util.Log;
 import android.util.Patterns;
 import android.view.View;
-import android.widget.Space;
 import android.widget.Toast;
 
 import androidx.annotation.Nullable;
-import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
 
 import com.example.prm392_frontend.databinding.ActivityUserProfileBinding;
+import com.example.prm392_frontend.utils.AuthHelper;
+import com.example.prm392_frontend.utils.AuthInterceptor;
 import com.google.android.material.tabs.TabLayout;
 import com.google.gson.Gson;
 import com.google.gson.JsonArray;
@@ -29,7 +29,6 @@ import java.util.TimeZone;
 
 import okhttp3.Call;
 import okhttp3.Callback;
-import okhttp3.Headers;
 import okhttp3.HttpUrl;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
@@ -41,9 +40,6 @@ public class UserProfileActivity extends BaseActivity {
     // ====== CONFIG API ======
     private static final String API_ORDERS  = "https://prm392-backend.nducky.id.vn/api/order";
     private static final String API_PROFILE = "https://prm392-backend.nducky.id.vn/api/users/profile";
-    // Token mới bạn đưa:
-    private static final String BEARER_TOKEN =
-            "eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJzdHJpbmciLCJyb2xlIjoiVVNFUiIsImV4cCI6MTc2MDg2NTg2MCwidXNlcklkIjo3LCJpYXQiOjE3NjA4NjIyNjB9.Ht9OVGKd0vRQ5MEKkFyVPkEFSPZJBwQ3mT0uwfz4ZvM";
     private static final String TAG = "UserProfileActivity";
 
     private ActivityUserProfileBinding ui;
@@ -56,45 +52,60 @@ public class UserProfileActivity extends BaseActivity {
     private boolean isEditMode = false;
     private UserProfile currentUser;
 
+    private AuthHelper auth;
+
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
-        Log.i(TAG, "onCreate() BEFORE setContentView");
         super.onCreate(savedInstanceState);
         ui = ActivityUserProfileBinding.inflate(getLayoutInflater());
         setContentView(ui.getRoot());
-        Log.i(TAG, "onCreate() AFTER setContentView");
 
-        // OkHttp + logging
-        HttpLoggingInterceptor logInterceptor = new HttpLoggingInterceptor(msg -> Log.d("OkHttp", msg));
-        logInterceptor.setLevel(HttpLoggingInterceptor.Level.BODY);
+        // ========== Auth ==========
+        auth = new AuthHelper(getApplicationContext()); // dùng applicationContext để đồng nhất SharedPrefs
+
+        Log.i(TAG, "isLoggedIn=" + auth.isLoggedIn());
+        String rawToken = auth.getToken();
+        Log.i(TAG, "token=" + (rawToken == null ? "null" : "len=" + rawToken.length()));
+
+        // Nếu chưa đăng nhập thì thoát sớm để không gọi API
+        if (!auth.isLoggedIn() || rawToken == null || rawToken.trim().isEmpty()) {
+            Toast.makeText(this, "Bạn chưa đăng nhập!", Toast.LENGTH_LONG).show();
+            finish();
+            return;
+        }
+
+        // ========== OkHttp ==========
+        HttpLoggingInterceptor httpLogger = new HttpLoggingInterceptor(msg -> Log.d("OkHttp", msg));
+        httpLogger.setLevel(HttpLoggingInterceptor.Level.BODY);
+
         http = new OkHttpClient.Builder()
-                .addInterceptor(chain -> {
-                    Request req = chain.request().newBuilder()
-                            .header("Authorization", "Bearer " + BEARER_TOKEN)
-                            .header("accept", "*/*")
-                            .build();
-                    Log.i(TAG, "➡️ " + req.method() + " " + req.url());
-                    return chain.proceed(req);
+                .addInterceptor(new AuthInterceptor(auth))             // tự gắn Authorization
+                .addInterceptor(chain -> {                            // log header Authorization để kiểm tra
+                    Request r0 = chain.request();
+                    Log.i(TAG, "➡️ " + r0.method() + " " + r0.url());
+                    Log.i(TAG, "Authorization = " + r0.header("Authorization"));
+                    return chain.proceed(r0);
                 })
-                .addInterceptor(logInterceptor)
+                .addInterceptor(httpLogger)
                 .build();
 
+        // ========== UI ==========
         setupToolbar();
         setupTabs();
         setupOrders();
 
-        // gọi API
+        // ========== Load dữ liệu ==========
         fetchProfile();
         fetchOrders();
 
-        // Edit/Save
+        // ========== Edit/Save ==========
         ui.fabEditSave.setOnClickListener(v -> {
             if (isEditMode) {
                 if (!validateInputs()) return;
                 if (currentUser == null) currentUser = new UserProfile();
-                currentUser.email = ui.edtEmail.getText() == null ? "" : ui.edtEmail.getText().toString().trim();
-                currentUser.phoneNumber = ui.edtPhone.getText() == null ? "" : ui.edtPhone.getText().toString().trim();
-                currentUser.address = ui.edtAddress.getText() == null ? "" : ui.edtAddress.getText().toString().trim();
+                currentUser.email = text(ui.edtEmail);
+                currentUser.phoneNumber = text(ui.edtPhone);
+                currentUser.address = text(ui.edtAddress);
                 Toast.makeText(this, "Saved (local)!", Toast.LENGTH_SHORT).show();
                 setEditMode(false);
             } else {
@@ -114,11 +125,13 @@ public class UserProfileActivity extends BaseActivity {
         });
     }
 
+    // ========== Toolbar ==========
     private void setupToolbar() {
         setSupportActionBar(ui.toolbar);
         ui.toolbar.setNavigationOnClickListener(v -> getOnBackPressedDispatcher().onBackPressed());
     }
 
+    // ========== Tabs ==========
     private void setupTabs() {
         TabLayout.Tab t1 = ui.tabLayout.newTab().setText("Profile");
         TabLayout.Tab t2 = ui.tabLayout.newTab().setText("Orders");
@@ -141,6 +154,7 @@ public class UserProfileActivity extends BaseActivity {
         });
     }
 
+    // ========== Orders Recycler ==========
     private void setupOrders() {
         ui.rvOrders.setLayoutManager(new LinearLayoutManager(this));
         orderAdapter = new OrderAdapter(orders);
@@ -151,7 +165,7 @@ public class UserProfileActivity extends BaseActivity {
         ui.btnViewAllOrders.setOnClickListener(v -> Toast.makeText(this, "View all orders", Toast.LENGTH_SHORT).show());
     }
 
-    // ================= PROFILE =================
+    // ========== PROFILE ==========
     private void fetchProfile() {
         Log.i(TAG, "➡️ fetchProfile(): start");
         Request req = new Request.Builder()
@@ -176,21 +190,23 @@ public class UserProfileActivity extends BaseActivity {
                 }
                 try {
                     JsonObject root = gson.fromJson(body, JsonObject.class);
-                    JsonObject data = root != null && root.has("data") && root.get("data").isJsonObject()
-                            ? root.getAsJsonObject("data")
-                            : null;
+                    JsonObject data = (root != null && root.has("data") && root.get("data").isJsonObject())
+                            ? root.getAsJsonObject("data") : null;
+
                     if (data == null) {
-                        runOnUiThread(() -> Toast.makeText(UserProfileActivity.this, "Profile empty data", Toast.LENGTH_LONG).show());
+                        runOnUiThread(() ->
+                                Toast.makeText(UserProfileActivity.this, "Profile empty data", Toast.LENGTH_LONG).show());
                         return;
                     }
+
                     UserProfile u = new UserProfile();
-                    u.id = optInt(data, "id");
-                    u.username = optString(data, "username");
-                    u.email = optString(data, "email");
+                    u.id          = optInt(data, "id");
+                    u.username    = optString(data, "username");
+                    u.email       = optString(data, "email");
                     u.phoneNumber = optString(data, "phoneNumber");
-                    u.address = optString(data, "address");
-                    u.role = optString(data, "role");
-                    currentUser = u;
+                    u.address     = optString(data, "address");
+                    u.role        = optString(data, "role");
+                    currentUser   = u;
 
                     runOnUiThread(() -> {
                         fillUser(u);
@@ -198,7 +214,8 @@ public class UserProfileActivity extends BaseActivity {
                     });
                 } catch (Exception ex) {
                     Log.e(TAG, "💥 fetchProfile(): parse error " + ex.getMessage(), ex);
-                    runOnUiThread(() -> Toast.makeText(UserProfileActivity.this, "Profile parse error", Toast.LENGTH_LONG).show());
+                    runOnUiThread(() ->
+                            Toast.makeText(UserProfileActivity.this, "Profile parse error", Toast.LENGTH_LONG).show());
                 }
             }
         });
@@ -210,7 +227,6 @@ public class UserProfileActivity extends BaseActivity {
         ui.edtEmail.setText(safe(u.email));
         ui.edtPhone.setText(safe(u.phoneNumber));
         ui.edtAddress.setText(safe(u.address));
-//        ui.edtRole.setText(safe(u.role));
         ui.btnRoleChip.setText(TextUtils.isEmpty(u.role) ? "ROLE" : u.role);
     }
 
@@ -246,7 +262,7 @@ public class UserProfileActivity extends BaseActivity {
         return ok;
     }
 
-    // ================= ORDERS =================
+    // ========== ORDERS ==========
     private void fetchOrders() {
         Log.i(TAG, "➡️ fetchOrders(): start");
         ui.emptyOrders.setVisibility(View.GONE);
@@ -278,9 +294,8 @@ public class UserProfileActivity extends BaseActivity {
                 }
                 try {
                     JsonObject root = gson.fromJson(body, JsonObject.class);
-                    JsonArray arr = root != null && root.has("data") && root.get("data").isJsonArray()
-                            ? root.getAsJsonArray("data")
-                            : new JsonArray();
+                    JsonArray arr = (root != null && root.has("data") && root.get("data").isJsonArray())
+                            ? root.getAsJsonArray("data") : new JsonArray();
 
                     ArrayList<OrderItem> fresh = new ArrayList<>();
                     for (int i = 0; i < arr.size(); i++) {
@@ -290,7 +305,6 @@ public class UserProfileActivity extends BaseActivity {
                         String orderDateStr  = optString(o, "orderDate");
                         String paymentMethod = optString(o, "paymentMethod");
 
-                        // userID object -> username (nếu có)
                         String username = "";
                         if (o.has("userID") && o.get("userID").isJsonObject()) {
                             username = optString(o.getAsJsonObject("userID"), "username");
@@ -329,7 +343,7 @@ public class UserProfileActivity extends BaseActivity {
         ui.rvOrders.setVisibility(empty ? View.GONE : View.VISIBLE);
     }
 
-    // ================= Helpers =================
+    // ========== Helpers ==========
     private static String text(com.google.android.material.textfield.TextInputEditText e) {
         return e.getText() == null ? "" : e.getText().toString().trim();
     }
@@ -367,7 +381,7 @@ public class UserProfileActivity extends BaseActivity {
         return new SimpleDateFormat("dd/MM/yyyy", Locale.getDefault()).format(d);
     }
 
-    // =============== Models nhỏ gọn để hiển thị ===============
+    // ========== Models ==========
     static class UserProfile {
         int id;
         String username;

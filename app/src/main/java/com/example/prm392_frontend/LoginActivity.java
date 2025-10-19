@@ -3,6 +3,7 @@ package com.example.prm392_frontend;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
 import android.widget.Toast;
 
@@ -12,6 +13,7 @@ import com.example.prm392_frontend.api.ApiClient;
 import com.example.prm392_frontend.databinding.ActivityLoginBinding;
 import com.example.prm392_frontend.models.AuthResponse;
 import com.example.prm392_frontend.models.LoginRequest;
+import com.example.prm392_frontend.utils.AuthHelper;
 
 import retrofit2.Call;
 import retrofit2.Callback;
@@ -70,12 +72,14 @@ public class LoginActivity extends AppCompatActivity {
                 setLoading(false);
 
                 if (response.isSuccessful() && response.body() != null) {
-                    AuthResponse authResponse = response.body();
+                    AuthResponse ar = response.body();
 
-                    // Save authentication data
-                    saveAuthData(authResponse);
+                    AuthHelper auth = new AuthHelper(getApplicationContext());
+                    auth.saveAuthData(ar.getToken(), ar.getUsername(), ar.getRole());
 
+                    Log.i("Login", "Saved token len=" + (auth.getToken()==null?0:auth.getToken().length()));
                     Toast.makeText(LoginActivity.this, "Login successful!", Toast.LENGTH_SHORT).show();
+
                     navigateToMain();
                 } else {
                     String errorMsg = "Login failed: ";
