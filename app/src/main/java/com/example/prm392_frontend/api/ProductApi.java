@@ -1,5 +1,6 @@
 package com.example.prm392_frontend.api;
 
+import com.example.prm392_frontend.models.ApiResponse;
 import com.example.prm392_frontend.models.CategoryResponse;
 import com.example.prm392_frontend.models.ProductResponse;
 
@@ -14,17 +15,17 @@ public interface ProductApi {
      * Get all products
      */
     @GET("/api/products")
-    Call<List<ProductResponse>> getAllProducts();
+    Call<ApiResponse<List<ProductResponse>>> getAllProducts();
 
     /**
      * Get product by ID
      */
     @GET("/api/products/{id}")
-    Call<ProductResponse> getProductById(@Path("id") int id);
+    Call<ApiResponse<ProductResponse>> getProductById(@Path("id") int id);
 
     /**
      * Get all categories
      */
     @GET("/api/categories")
-    Call<List<CategoryResponse>> getAllCategories();
+    Call<ApiResponse<List<CategoryResponse>>> getAllCategories();
 }

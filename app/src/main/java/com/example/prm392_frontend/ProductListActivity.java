@@ -16,6 +16,7 @@ import androidx.appcompat.widget.SearchView;
 import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import com.example.prm392_frontend.api.ApiClient;
+import com.example.prm392_frontend.models.ApiResponse;
 import com.example.prm392_frontend.models.CategoryResponse;
 import com.example.prm392_frontend.models.ProductResponse;
 import com.example.prm392_frontend.utils.AuthHelper;
@@ -30,7 +31,7 @@ import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
 
-public class ProductListActivity extends AppCompatActivity {
+public class ProductListActivity extends BaseActivity {
 
     private static final String TAG = "ProductListActivity";
 
@@ -242,16 +243,18 @@ public class ProductListActivity extends AppCompatActivity {
     }
 
     private void fetchCategoriesFromApi() {
-        ApiClient.getProductApi().getAllCategories().enqueue(new Callback<List<CategoryResponse>>() {
+        ApiClient.getProductApi().getAllCategories().enqueue(new Callback<ApiResponse<List<CategoryResponse>>>() {
             @Override
-            public void onResponse(@NonNull Call<List<CategoryResponse>> call, @NonNull Response<List<CategoryResponse>> response) {
-                if (response.isSuccessful() && response.body() != null) {
-                    categoryNames.clear();
-                    for (CategoryResponse category : response.body()) {
-                        categoryNames.add(category.getCategoryName());
+            public void onResponse(@NonNull Call<ApiResponse<List<CategoryResponse>>> call, @NonNull Response<ApiResponse<List<CategoryResponse>>> response) {
+                if (response.isSuccessful() && response.body() != null && response.body().isSuccess()) {
+                    List<CategoryResponse> categories = response.body().getData();
+                    if (categories != null) {
+                        categoryNames.clear();
+                        for (CategoryResponse category : categories) {
+                            categoryNames.add(category.getCategoryName());
+                        }
+                        Log.d(TAG, "Fetched " + categoryNames.size() + " categories from API");
                     }
-                    Log.d(TAG, "Fetched " + categoryNames.size() + " categories from API");
-
                     // Now fetch products
                     fetchProductsFromApi();
                 } else {
@@ -262,7 +265,7 @@ public class ProductListActivity extends AppCompatActivity {
             }
 
             @Override
-            public void onFailure(@NonNull Call<List<CategoryResponse>> call, @NonNull Throwable t) {
+            public void onFailure(@NonNull Call<ApiResponse<List<CategoryResponse>>> call, @NonNull Throwable t) {
                 Log.e(TAG, "Categories API call failed", t);
                 // Still try to fetch products even if categories fail
                 fetchProductsFromApi();
@@ -273,34 +276,40 @@ public class ProductListActivity extends AppCompatActivity {
     private void fetchProductsFromApi() {
         showLoading(true);
 
-        ApiClient.getProductApi().getAllProducts().enqueue(new Callback<List<ProductResponse>>() {
+        ApiClient.getProductApi().getAllProducts().enqueue(new Callback<ApiResponse<List<ProductResponse>>>() {
             @Override
-            public void onResponse(@NonNull Call<List<ProductResponse>> call, @NonNull Response<List<ProductResponse>> response) {
+            public void onResponse(@NonNull Call<ApiResponse<List<ProductResponse>>> call, @NonNull Response<ApiResponse<List<ProductResponse>>> response) {
                 showLoading(false);
 
-                if (response.isSuccessful() && response.body() != null) {
-                    List<ProductResponse> productResponses = response.body();
+                if (response.isSuccessful() && response.body() != null && response.body().isSuccess()) {
+                    List<ProductResponse> productResponses = response.body().getData();
 
-                    // Convert API response to Product models
-                    allProducts = ProductMapper.fromResponseList(productResponses);
-                    filteredProducts = new ArrayList<>(allProducts);
+                    if (productResponses != null) {
+                        // Convert API response to Product models
+                        allProducts = ProductMapper.fromResponseList(productResponses);
+                        filteredProducts = new ArrayList<>(allProducts);
 
-                    Log.d(TAG, "Fetched " + allProducts.size() + " products from API");
+                        Log.d(TAG, "Fetched " + allProducts.size() + " products from API");
 
-                    // Update adapter
-                    applyFiltersAndSort();
+                        // Update adapter
+                        applyFiltersAndSort();
 
-                    if (allProducts.isEmpty()) {
+                        if (allProducts.isEmpty()) {
+                            showError("No products available");
+                        }
+                    } else {
+                        Log.e(TAG, "Product data is null");
                         showError("No products available");
                     }
                 } else {
-                    Log.e(TAG, "API response not successful: " + response.code());
-                    showError("Failed to load products (Error " + response.code() + ")");
+                    String errorMsg = response.body() != null ? response.body().getMessage() : "Unknown error";
+                    Log.e(TAG, "API response not successful: " + response.code() + " - " + errorMsg);
+                    showError("Failed to load products: " + errorMsg);
                 }
             }
 
             @Override
-            public void onFailure(@NonNull Call<List<ProductResponse>> call, @NonNull Throwable t) {
+            public void onFailure(@NonNull Call<ApiResponse<List<ProductResponse>>> call, @NonNull Throwable t) {
                 showLoading(false);
                 Log.e(TAG, "API call failed", t);
                 showError("Network error: " + t.getMessage());
