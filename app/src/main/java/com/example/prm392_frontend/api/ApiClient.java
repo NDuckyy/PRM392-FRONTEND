@@ -20,4 +20,8 @@ public class ApiClient {
     public static AuthApi getAuthApi() {
         return getClient().create(AuthApi.class);
     }
+
+    public static ProductApi getProductApi() {
+        return getClient().create(ProductApi.class);
+    }
 }

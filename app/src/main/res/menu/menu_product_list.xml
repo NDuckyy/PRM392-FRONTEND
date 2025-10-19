@@ -2,6 +2,10 @@
 <menu xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto">
     <item
+        android:id="@+id/action_auth"
+        android:title="Login"
+        app:showAsAction="always" />
+    <item
         android:id="@+id/action_search"
         android:icon="@android:drawable/ic_menu_search"
         android:title="Search"
@@ -9,12 +13,12 @@
         app:actionViewClass="androidx.appcompat.widget.SearchView" />
     <item
         android:id="@+id/action_sort"
-        android:icon="@android:drawable/ic_menu_sort_by_size"
+        android:icon="@android:drawable/ic_menu_sort_alphabetically"
         android:title="Sort"
         app:showAsAction="always" />
     <item
         android:id="@+id/action_filter"
-        android:icon="@android:drawable/ic_menu_sort_alphabetically"
+        android:icon="@android:drawable/ic_menu_sort_by_size"
         android:title="Filter"
         app:showAsAction="always" />
 </menu>

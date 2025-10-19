@@ -1,6 +1,7 @@
 package com.example.prm392_frontend;
 
 import android.animation.ObjectAnimator;
+import android.content.Intent;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -18,6 +19,7 @@ import androidx.recyclerview.widget.RecyclerView;
 import androidx.viewpager2.widget.ViewPager2;
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.load.engine.DiskCacheStrategy;
+import com.example.prm392_frontend.utils.AuthHelper;
 import com.google.android.material.appbar.CollapsingToolbarLayout;
 import com.google.android.material.appbar.MaterialToolbar;
 import com.google.android.material.button.MaterialButton;
@@ -27,10 +29,11 @@ import java.util.Locale;
 
 public class ProductDetailsActivity extends AppCompatActivity {
 
+    private static final int REQUEST_CODE_LOGIN = 1001;
+
     private ViewPager2 imageViewPager;
     private TextView productName;
     private TextView productCategory;
-    private TextView productRating;
     private TextView productPrice;
     private TextView productDescription;
     private TextView productSpecifications;
@@ -40,11 +43,15 @@ public class ProductDetailsActivity extends AppCompatActivity {
     private MaterialButton addToCartButton;
     private Product product;
     private int quantity = 1;
+    private AuthHelper authHelper;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_product_details);
+
+        // Initialize AuthHelper
+        authHelper = new AuthHelper(this);
 
         // Get product from intent
         product = getIntent().getParcelableExtra("product");
@@ -59,7 +66,6 @@ public class ProductDetailsActivity extends AppCompatActivity {
         imageViewPager = findViewById(R.id.image_viewpager);
         productName = findViewById(R.id.product_detail_name);
         productCategory = findViewById(R.id.product_detail_category);
-        productRating = findViewById(R.id.product_detail_rating);
         productPrice = findViewById(R.id.product_detail_price);
         productDescription = findViewById(R.id.product_detail_description);
         productSpecifications = findViewById(R.id.product_specifications);
@@ -72,16 +78,28 @@ public class ProductDetailsActivity extends AppCompatActivity {
         setSupportActionBar(toolbar);
         toolbar.setNavigationOnClickListener(v -> onBackPressed());
 
-        // Set collapsing toolbar title
-        collapsingToolbar.setTitle(product.getName());
+        // Set collapsing toolbar title (only show when collapsed, hide when expanded to show image clearly)
+        collapsingToolbar.setTitle(" ");
 
         // Populate data
         populateProductDetails();
         setupQuantityControls();
 
-        // Add to cart button
+        // Add to cart button - check login first
         addToCartButton.setOnClickListener(v -> {
-            Toast.makeText(this, "Added " + quantity + "x " + product.getName() + " to cart", Toast.LENGTH_SHORT).show();
+            if (authHelper.isLoggedIn()) {
+                // User is logged in, add to cart
+                addToCart();
+            } else {
+                // User not logged in, redirect to login
+                Toast.makeText(this, "Please login to add items to cart", Toast.LENGTH_SHORT).show();
+                Intent loginIntent = new Intent(ProductDetailsActivity.this, LoginActivity.class);
+                // Pass product info to return after login
+                loginIntent.putExtra("return_to_product", true);
+                loginIntent.putExtra("product", product);
+                loginIntent.putExtra("quantity", quantity);
+                startActivityForResult(loginIntent, REQUEST_CODE_LOGIN);
+            }
         });
     }
 
@@ -93,11 +111,10 @@ public class ProductDetailsActivity extends AppCompatActivity {
 
         productName.setText(product.getName());
         productCategory.setText(product.getCategory());
-        productRating.setText(String.format(Locale.getDefault(), "%.1f", product.getRating()));
 
         // Format currency with thousand separators
         NumberFormat currencyFormat = NumberFormat.getInstance(new Locale("vi", "VN"));
-        String formattedPrice = "₫" + currencyFormat.format(product.getPrice() * 1000);
+        String formattedPrice = "₫" + currencyFormat.format(product.getPrice());
         productPrice.setText(formattedPrice);
 
         productDescription.setText(product.getDescription());
@@ -137,6 +154,39 @@ public class ProductDetailsActivity extends AppCompatActivity {
 
         scaleXAnimation.start();
         scaleYAnimation.start();
+    }
+
+    private void addToCart() {
+        // TODO: Implement actual cart API call here
+        // For now, just show success message
+        Toast.makeText(this, "Added " + quantity + "x " + product.getName() + " to cart", Toast.LENGTH_SHORT).show();
+
+        // Animate button
+        SpringAnimation scaleX = new SpringAnimation(addToCartButton, DynamicAnimation.SCALE_X, 1f);
+        scaleX.setStartValue(0.9f);
+        SpringForce springForce = new SpringForce(1f);
+        springForce.setStiffness(SpringForce.STIFFNESS_MEDIUM);
+        springForce.setDampingRatio(SpringForce.DAMPING_RATIO_MEDIUM_BOUNCY);
+        scaleX.setSpring(springForce);
+
+        SpringAnimation scaleY = new SpringAnimation(addToCartButton, DynamicAnimation.SCALE_Y, 1f);
+        scaleY.setStartValue(0.9f);
+        scaleY.setSpring(springForce);
+
+        scaleX.start();
+        scaleY.start();
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+
+        if (requestCode == REQUEST_CODE_LOGIN && resultCode == RESULT_OK) {
+            // User logged in successfully, now add to cart
+            if (authHelper.isLoggedIn()) {
+                addToCart();
+            }
+        }
     }
 
     @Override
