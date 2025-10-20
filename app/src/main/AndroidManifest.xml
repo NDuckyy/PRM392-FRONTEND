@@ -20,9 +20,8 @@
         android:usesCleartextTraffic="true">
 
 
-        <!-- Activity bản đồ -->
         <activity
-            android:name=".PaymentSuccessActivity"
+            android:name=".CartActivity"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN"/>
@@ -31,7 +30,7 @@
         </activity>
 
         <activity
-            android:name=".ProductListActivity"
+            android:name=".PaymentActivity"
             android:exported="false" />
 
     </application>

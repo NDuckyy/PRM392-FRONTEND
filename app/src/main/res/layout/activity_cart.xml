@@ -183,6 +183,38 @@
         </LinearLayout>
     </com.google.android.material.card.MaterialCardView>
 
+    <!-- 6. VIEW HIỂN THỊ KHI GIỎ HÀNG TRỐNG (ĐÃ CẬP NHẬT) -->
+    <LinearLayout
+        android:id="@+id/emptyCartView"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:gravity="center"
+        android:orientation="vertical"
+        android:visibility="gone"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        tools:visibility="visible">
+
+        <!-- Icon riêng biệt, có thể tùy chỉnh kích thước -->
+        <ImageView
+            android:layout_width="120dp"
+            android:layout_height="120dp"
+            android:src="@drawable/ic_shopping_cart"
+            app:tint="?attr/colorPrimary" />
+
+        <!-- Chữ riêng biệt -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:text="Giỏ hàng của bạn đang trống"
+            android:textColor="@color/design_default_color_primary"
+            android:textSize="18sp" />
+    </LinearLayout>
+
+
     <!-- 5. THÔNG BÁO LỖI TÙY CHỈNH (Không đổi) -->
     <include
         android:id="@+id/errorToast"

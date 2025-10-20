@@ -24,4 +24,20 @@ public class ApiClient {
     public static ProductApi getProductApi() {
         return getClient().create(ProductApi.class);
     }
+
+    public static CartApi getCartApi() {
+        return getClient().create(CartApi.class);
+    }
+
+    public static CartApi cartUpdateQuantity(){
+        return getClient().create(CartApi.class);
+    }
+    public static PaymentApi getPaymentUrl() {
+        return getClient().create(PaymentApi.class);
+    }
+
+    public static OrderApi getOrderApi() {
+        return getClient().create(OrderApi.class);
+    }
+
 }
