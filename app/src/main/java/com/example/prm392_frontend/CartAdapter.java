@@ -1,6 +1,5 @@
 package com.example.prm392_frontend;
 
-import android.content.Context;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -15,25 +14,32 @@ import com.bumptech.glide.Glide;
 import com.example.prm392_frontend.models.CartItemResponse;
 
 import java.text.NumberFormat;
+import java.util.ArrayList; // <-- SỬA: Thêm import này
 import java.util.List;
 import java.util.Locale;
 
 public class CartAdapter extends RecyclerView.Adapter<CartAdapter.CartViewHolder> {
 
-    private List<CartItemResponse> cartItems;
-    private Context context;
+    // ====================================================================
+    // SỬA 1: Khởi tạo danh sách ngay từ đầu để không bao giờ bị null
+    // ====================================================================
+    private List<CartItemResponse> cartItems = new ArrayList<>();
     private CartAdapterListener listener;
 
+    // ====================================================================
+    // SỬA 2: Xóa bỏ các hàm khởi tạo cũ và chỉ giữ lại một hàm duy nhất,
+    // đơn giản để nhận listener từ Activity.
+    // ====================================================================
+    public CartAdapter(CartAdapterListener listener) {
+        this.listener = listener;
+    }
+
+    // Interface không đổi
     public interface CartAdapterListener {
         void onUpdateQuantity(int cartItemId, int newQuantity);
         void onDeleteItem(int cartItemId);
     }
 
-    public CartAdapter(Context context, List<CartItemResponse> cartItems, CartAdapterListener listener) {
-        this.context = context;
-        this.cartItems = cartItems;
-        this.listener = listener;
-    }
 
     @NonNull
     @Override
@@ -50,9 +56,23 @@ public class CartAdapter extends RecyclerView.Adapter<CartAdapter.CartViewHolder
 
     @Override
     public int getItemCount() {
+        // Giờ đây `cartItems` không bao giờ null, nên có thể trả về trực tiếp
         return cartItems.size();
     }
 
+    // ====================================================================
+    // SỬA 3: Làm cho hàm updateData an toàn hơn bằng cách kiểm tra
+    // dữ liệu mới có phải là null hay không.
+    // ====================================================================
+    public void updateData(List<CartItemResponse> newCartItems) {
+        this.cartItems.clear(); // Dòng này giờ đã an toàn
+        if (newCartItems != null) {
+            this.cartItems.addAll(newCartItems);
+        }
+        notifyDataSetChanged();
+    }
+
+    // Lớp ViewHolder bên trong không cần thay đổi, giữ nguyên
     public static class CartViewHolder extends RecyclerView.ViewHolder {
         ImageView imageViewProduct;
         TextView textViewProductName, textViewProductPrice;
@@ -61,7 +81,7 @@ public class CartAdapter extends RecyclerView.Adapter<CartAdapter.CartViewHolder
         ConstraintLayout editViewLayout;
         ImageButton buttonDecrease, buttonIncrease;
         TextView textViewQuantityEdit;
-        Button buttonDelete; // Đổi tên từ buttonCancelUpdate để rõ nghĩa hơn
+        Button buttonDelete;
         Button buttonConfirmUpdate;
 
         private int originalQuantity;
@@ -69,49 +89,35 @@ public class CartAdapter extends RecyclerView.Adapter<CartAdapter.CartViewHolder
 
         public CartViewHolder(@NonNull View itemView) {
             super(itemView);
-
-            // Ánh xạ các view
             imageViewProduct = itemView.findViewById(R.id.imageViewProduct);
             textViewProductName = itemView.findViewById(R.id.textViewProductName);
             textViewProductPrice = itemView.findViewById(R.id.textViewProductPrice);
-
-            // Ánh xạ Edit View
             editViewLayout = itemView.findViewById(R.id.editViewLayout);
             buttonDecrease = itemView.findViewById(R.id.buttonDecrease);
             buttonIncrease = itemView.findViewById(R.id.buttonIncrease);
             textViewQuantityEdit = itemView.findViewById(R.id.textViewQuantityEdit);
-            buttonDelete = itemView.findViewById(R.id.buttonDelete); // Ánh xạ nút xóa
+            buttonDelete = itemView.findViewById(R.id.buttonDelete);
             buttonConfirmUpdate = itemView.findViewById(R.id.buttonConfirmUpdate);
         }
 
         public void bind(final CartItemResponse item, final CartAdapterListener listener) {
             NumberFormat currencyFormat = NumberFormat.getCurrencyInstance(new Locale("vi", "VN"));
-
-            // Binding dữ liệu
             textViewProductName.setText(item.getProductName());
             textViewProductPrice.setText(currencyFormat.format(item.getPrice()));
 
-            // Sử dụng Glide để load ảnh
             Glide.with(itemView.getContext())
                     .load(item.getImageUrl())
                     .placeholder(android.R.drawable.ic_menu_gallery)
                     .error(android.R.drawable.ic_menu_report_image)
                     .into(imageViewProduct);
 
-            // Lưu và hiển thị số lượng
             originalQuantity = item.getQuantity();
             currentQuantity = originalQuantity;
             textViewQuantityEdit.setText(String.valueOf(currentQuantity));
 
-            // Ban đầu, nút "Cập nhật" sẽ bị ẩn đi
             buttonConfirmUpdate.setVisibility(View.GONE);
-            // Và nút "-" sẽ bị vô hiệu hóa nếu số lượng là 1
             buttonDecrease.setEnabled(currentQuantity > 1);
 
-
-            // ================== XỬ LÝ SỰ KIỆN CLICK ==================
-
-            // 1. Nhấn nút Giảm (-)
             buttonDecrease.setOnClickListener(v -> {
                 if (currentQuantity > 1) {
                     currentQuantity--;
@@ -120,52 +126,28 @@ public class CartAdapter extends RecyclerView.Adapter<CartAdapter.CartViewHolder
                 }
             });
 
-            // 2. Nhấn nút Tăng (+)
             buttonIncrease.setOnClickListener(v -> {
                 currentQuantity++;
                 textViewQuantityEdit.setText(String.valueOf(currentQuantity));
                 checkIfQuantityChanged();
             });
 
-            // 3. Nhấn nút "Xóa"
             buttonDelete.setOnClickListener(v -> {
                 if (listener != null) {
                     listener.onDeleteItem(item.getId());
                 }
             });
 
-            // 4. Nhấn nút "Cập nhật"
             buttonConfirmUpdate.setOnClickListener(v -> {
                 if (listener != null) {
-                    // Gọi API để cập nhật số lượng
                     listener.onUpdateQuantity(item.getId(), currentQuantity);
-
-                    // Sau khi gọi API thành công, bạn nên cập nhật lại originalQuantity
-                    // và ẩn nút Cập nhật đi trong hàm callback ở Activity.
-                    // Ví dụ: originalQuantity = currentQuantity;
-                    //        checkIfQuantityChanged();
                 }
             });
         }
 
-        // Hàm kiểm tra xem số lượng có thay đổi không để ẩn/hiện nút "Cập nhật"
         private void checkIfQuantityChanged() {
-            // Hiện/ẩn nút "Cập nhật"
-            if (currentQuantity != originalQuantity) {
-                buttonConfirmUpdate.setVisibility(View.VISIBLE);
-            } else {
-                buttonConfirmUpdate.setVisibility(View.GONE);
-            }
-
-            // Bật/tắt nút giảm
-            // Điều này ngăn người dùng giảm số lượng xuống dưới 1
+            buttonConfirmUpdate.setVisibility(currentQuantity != originalQuantity ? View.VISIBLE : View.GONE);
             buttonDecrease.setEnabled(currentQuantity > 1);
         }
-    }
-
-    public void updateData(List<CartItemResponse> newCartItems) {
-        this.cartItems.clear();
-        this.cartItems.addAll(newCartItems);
-        notifyDataSetChanged();
     }
 }

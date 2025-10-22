@@ -20,7 +20,10 @@
             android:layout_width="match_parent"
             android:layout_height="?attr/actionBarSize"
             app:navigationIcon="@drawable/ic_arrow_back"
-            app:title="Giỏ hàng" />
+            app:title="Giỏ hàng"
+            app:titleCentered="true"
+            app:menu="@menu/cart_toolbar_menu"/>
+
 
     </com.google.android.material.appbar.AppBarLayout>
 
@@ -121,6 +124,9 @@
 
     <!-- 3. DANH SÁCH SẢN PHẨM (Được chuyển lên trên) -->
     <!-- Nó sẽ chiếm không gian giữa AppBar và khối Thông tin giao hàng -->
+
+    <!-- 4. KHỐI THÔNG TIN GIAO HÀNG (Được chuyển xuống dưới) -->
+    <!-- Nó sẽ nằm ngay trên bottomBar -->
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/recyclerViewCartItems"
         android:layout_width="match_parent"
@@ -128,13 +134,13 @@
         android:clipToPadding="false"
         android:paddingTop="8dp"
         android:paddingBottom="8dp"
-        app:layout_constraintTop_toBottomOf="@id/appBarLayout"
         app:layout_constraintBottom_toTopOf="@id/deliveryInfoCard"
-        tools:listitem="@layout/activity_cart_item"
-        tools:itemCount="5" />
+        app:layout_constraintTop_toBottomOf="@id/appBarLayout"
+        app:layout_constraintVertical_bias="0.0"
+        tools:itemCount="5"
+        tools:layout_editor_absoluteX="-8dp"
+        tools:listitem="@layout/activity_cart_item" />
 
-    <!-- 4. KHỐI THÔNG TIN GIAO HÀNG (Được chuyển xuống dưới) -->
-    <!-- Nó sẽ nằm ngay trên bottomBar -->
     <com.google.android.material.card.MaterialCardView
         android:id="@+id/deliveryInfoCard"
         android:layout_width="match_parent"
@@ -206,6 +212,7 @@
 
         <!-- Chữ riêng biệt -->
         <TextView
+            android:id="@+id/textViewEmptyMessage"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="16dp"

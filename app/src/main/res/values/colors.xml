@@ -7,4 +7,6 @@
     <color name="orange_light">#F5A855</color>
     <color name="white_transparent">#E0FFFFFF</color>
     <color name="text_dark">#333333</color>
+    <color name="failure_color">#F44336</color>
+    <color name="success_color">#4CAF50</color>
 </resources>

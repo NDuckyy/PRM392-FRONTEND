@@ -27,6 +27,8 @@ public class PaymentActivity extends AppCompatActivity {
     private MaterialToolbar topAppBar;
     private WebView webViewPayment;
     private ProgressBar progressBar;
+
+    private final String hardcodedToken = "eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJxdWFuIiwicm9sZSI6IlVTRVIiLCJleHAiOjE3NjEwNDQwODMsInVzZXJJZCI6OSwiaWF0IjoxNzYxMDQwNDgzfQ.xYWyu-1d9y8shkgahVACw1Z1DT7vE-SdsaufxnX4FR0";
     public static final String EXTRA_ORDER_ID = "ORDER_ID";
 
     @Override
@@ -39,7 +41,7 @@ public class PaymentActivity extends AppCompatActivity {
         setupClickListeners();
         setupOnBackPressed();
 
-        int orderId = 2;
+        int orderId = 6;
 
         if (orderId == -1) {
             Toast.makeText(this, "Lỗi: Không có ID đơn hàng để thanh toán.", Toast.LENGTH_LONG).show();
@@ -48,7 +50,8 @@ public class PaymentActivity extends AppCompatActivity {
         }
 
         // Bắt đầu quá trình lấy URL và tải nó
-        fetchPaymentUrlAndLoad(orderId);
+        String authHeader = "Bearer " + hardcodedToken;
+        fetchPaymentUrlAndLoad(authHeader,orderId);
     }
 
     private void initViews() {
@@ -79,21 +82,35 @@ public class PaymentActivity extends AppCompatActivity {
             }
 
             // Hàm này cực kỳ quan trọng để bắt Deep Link khi thanh toán xong
+            // Trong PaymentActivity.java
             @Override
             public boolean shouldOverrideUrlLoading(WebView view, WebResourceRequest request) {
                 String url = request.getUrl().toString();
 
-                // Kiểm tra xem URL có phải là Deep Link trả về của chúng ta không
-                // Ví dụ: prm392://payment/result?vnp_ResponseCode=00...
                 if (url.startsWith("prm392://")) {
-                    Intent intent = new Intent(Intent.ACTION_VIEW, request.getUrl());
+                    // Khi thanh toán xong, VNPay sẽ gọi về URL này.
+                    // Chuyển sang một Activity khác để hiển thị kết quả.
+                    Intent intent = new Intent(PaymentActivity.this, PaymentSuccessActivity.class);
+                    intent.setData(request.getUrl());
+
+                    // ====================================================================
+                    // SỬA LỖI Ở ĐÂY
+                    // ====================================================================
+                    // Thêm cờ này để xóa tất cả các Activity nằm trên đầu của Activity mới
+                    // trong cùng một task. Cụ thể ở đây nó sẽ xóa CartActivity.
+                    intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_NEW_TASK);
+
                     startActivity(intent);
-                    finish(); // Đóng PaymentActivity hiện tại
-                    return true; // Báo cho WebView biết chúng ta đã xử lý URL này
+
+                    // Sau khi đã start Activity mới với cờ CLEAR_TOP,
+                    // chúng ta cũng đóng luôn Activity hiện tại.
+                    finish(); // Dòng này bây giờ đã đúng
+
+                    return true; // Đã xử lý URL
                 }
-                // Đối với các URL khác (bên trong trang VNPay), để WebView tự xử lý
-                return false;
+                return false; // URL bình thường, để WebView tự xử lý
             }
+
         });
     }
 
@@ -105,13 +122,13 @@ public class PaymentActivity extends AppCompatActivity {
      * Gọi API để lấy URL thanh toán từ backend và sau đó tải nó lên WebView.
      * @param orderId ID của đơn hàng cần thanh toán.
      */
-    private void fetchPaymentUrlAndLoad(int orderId) {
+    private void fetchPaymentUrlAndLoad(String authen,int orderId) {
         progressBar.setVisibility(View.VISIBLE);
         webViewPayment.setVisibility(View.GONE);
 
         PaymentApi paymentApi = ApiClient.getPaymentUrl();
 
-        paymentApi.getPaymentUrl(orderId).enqueue(new Callback<ApiResponse<String>>() {
+        paymentApi.getPaymentUrl(authen,orderId).enqueue(new Callback<ApiResponse<String>>() {
             @Override
             public void onResponse(Call<ApiResponse<String>> call, Response<ApiResponse<String>> response) {
                 if (response.isSuccessful() && response.body() != null && response.body().getData() != null) {
