@@ -20,9 +20,8 @@
         android:usesCleartextTraffic="true">
 
 
-        <!-- Launcher: Product List -->
         <activity
-            android:name=".ProductListActivity"
+            android:name=".CartActivity"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN"/>
@@ -30,25 +29,31 @@
             </intent-filter>
         </activity>
 
-        <!-- Auth Activities -->
         <activity
-            android:name=".LoginActivity"
-            android:exported="false"
-            android:windowSoftInputMode="adjustResize" />
+            android:name=".PaymentActivity"
+            android:exported="true"
+            android:launchMode="singleTask">
+
+            <!-- BỘ LỌC CHO DEEP LINK -->
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data
+                    android:host="payment"
+                    android:pathPrefix="/result"
+                    android:scheme="prm392" />
+            </intent-filter>
+
+        </activity>
+
 
         <activity
-            android:name=".RegisterActivity"
-            android:exported="false"
-            android:windowSoftInputMode="adjustResize" />
-
-        <!-- Main Activity -->
-        <activity
-            android:name=".MainActivity"
+            android:name=".PaymentSuccessActivity"
             android:exported="false" />
 
-        <!-- Product Activities -->
         <activity
-            android:name=".ProductDetailsActivity"
+            android:name=".ProductListActivity"
             android:exported="false" />
 
         <activity
