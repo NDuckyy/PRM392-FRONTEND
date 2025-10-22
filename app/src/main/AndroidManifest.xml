@@ -22,7 +22,7 @@
 
         <!-- Launcher: Product List -->
         <activity
-            android:name=".CartActivity"
+            android:name=".ProductListActivity"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN"/>
@@ -62,7 +62,7 @@
         <activity
             android:name=".AddEditProductActivity"
             android:exported="false"
-            android:windowSoftInputMode="adjustResize" />
+            android:windowSoftInputMode="adjustR .esize" />
 
         <!-- Main Activity -->
 
@@ -70,9 +70,7 @@
             android:name=".PaymentSuccessActivity"
             android:exported="false" />
 
-        <!-- Product Activities -->
-        <activity
-            android:name=".ProductListActivity"
+        <activity android:name=".LoginActivity"
             android:exported="false" />
 
         <activity
