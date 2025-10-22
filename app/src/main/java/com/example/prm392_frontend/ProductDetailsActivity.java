@@ -41,6 +41,8 @@ public class ProductDetailsActivity extends AppCompatActivity {
     private MaterialButton btnDecrease;
     private MaterialButton btnIncrease;
     private MaterialButton addToCartButton;
+    private TextView tvProviderName;
+    private com.google.android.material.card.MaterialCardView providerCard;
     private Product product;
     private int quantity = 1;
     private AuthHelper authHelper;
@@ -73,6 +75,8 @@ public class ProductDetailsActivity extends AppCompatActivity {
         btnDecrease = findViewById(R.id.btn_decrease);
         btnIncrease = findViewById(R.id.btn_increase);
         addToCartButton = findViewById(R.id.add_to_cart_button);
+        tvProviderName = findViewById(R.id.tvProviderName);
+        providerCard = findViewById(R.id.provider_card);
 
         // Setup toolbar
         setSupportActionBar(toolbar);
@@ -84,6 +88,7 @@ public class ProductDetailsActivity extends AppCompatActivity {
         // Populate data
         populateProductDetails();
         setupQuantityControls();
+        setupProviderCard();
 
         // Add to cart button - check login first
         addToCartButton.setOnClickListener(v -> {
@@ -119,6 +124,51 @@ public class ProductDetailsActivity extends AppCompatActivity {
 
         productDescription.setText(product.getDescription());
         productSpecifications.setText(product.getSpecifications());
+    }
+
+    private void setupProviderCard() {
+        // Hide provider card if current user is a provider (providers cannot chat with other providers)
+        if (authHelper.isProvider()) {
+            providerCard.setVisibility(View.GONE);
+            return;
+        }
+
+        // Display provider name
+        String providerName = product.getProviderName();
+        if (providerName != null && !providerName.isEmpty()) {
+            tvProviderName.setText(providerName);
+        } else {
+            tvProviderName.setText("Unknown Provider");
+        }
+
+        // Set click listener to open chat
+        providerCard.setOnClickListener(v -> openChatWithProvider());
+    }
+
+    private void openChatWithProvider() {
+        if (!authHelper.isLoggedIn()) {
+            Toast.makeText(this, "Please login to chat with provider", Toast.LENGTH_SHORT).show();
+            Intent loginIntent = new Intent(this, LoginActivity.class);
+            startActivityForResult(loginIntent, REQUEST_CODE_LOGIN);
+            return;
+        }
+
+        String providerId = product.getProviderId();
+        String providerName = product.getProviderName();
+
+        if (providerId != null && !providerId.isEmpty()) {
+            // Create conversation ID: currentUserId-providerId
+            String currentUserId = authHelper.getUsername();
+            String conversationId = currentUserId + "-" + providerId;
+
+            Intent chatIntent = new Intent(this, ChatActivity.class);
+            chatIntent.putExtra("conversationId", conversationId);
+            chatIntent.putExtra("receiverId", providerId);
+            chatIntent.putExtra("receiverName", providerName != null ? providerName : "Provider");
+            startActivity(chatIntent);
+        } else {
+            Toast.makeText(this, "Provider information not available", Toast.LENGTH_SHORT).show();
+        }
     }
 
     private void setupQuantityControls() {

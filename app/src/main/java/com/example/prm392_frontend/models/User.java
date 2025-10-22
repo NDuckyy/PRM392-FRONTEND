@@ -1,4 +1,4 @@
-package com.example.app.models;
+package com.example.prm392_frontend.models;
 
 import java.io.Serializable;
 

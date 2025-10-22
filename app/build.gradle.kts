@@ -1,6 +1,7 @@
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.google.android.libraries.mapsplatform.secrets.gradle.plugin)
+    id("com.google.gms.google-services")
 }
 
 android {
@@ -75,4 +76,13 @@ dependencies {
     implementation("com.squareup.okhttp3:okhttp:4.12.0")
     implementation("com.squareup.okhttp3:logging-interceptor:4.12.0")
     implementation("com.google.code.gson:gson:2.11.0")
+
+    // Firebase BOM (Bill of Materials) - manages Firebase versions
+    implementation(platform("com.google.firebase:firebase-bom:32.7.0"))
+
+    // Firebase Firestore for realtime chat
+    implementation("com.google.firebase:firebase-firestore")
+
+    // Firebase Cloud Messaging (optional, for push notifications)
+    implementation("com.google.firebase:firebase-messaging")
 }

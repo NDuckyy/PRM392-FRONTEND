@@ -45,6 +45,14 @@ public class AuthHelper {
     }
 
     /**
+     * Check if current user is a provider
+     */
+    public boolean isProvider() {
+        String role = getRole();
+        return role != null && role.equalsIgnoreCase("PROVIDER");
+    }
+
+    /**
      * Save authentication data
      */
     public void saveAuthData(String token, String username, String role) {
