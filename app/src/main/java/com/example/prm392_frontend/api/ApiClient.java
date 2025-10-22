@@ -1,11 +1,16 @@
 package com.example.prm392_frontend.api;
 
+import android.content.Context;
+
 import com.example.prm392_frontend.models.ApiResponse;
 import com.example.prm392_frontend.models.CartItemUpdateRequest;
 import com.example.prm392_frontend.models.CartItemUpdateResponse;
 import com.example.prm392_frontend.models.OrderRequest;
 import com.example.prm392_frontend.models.OrderResponse;
+import com.example.prm392_frontend.utils.AuthHelper;
+import com.example.prm392_frontend.utils.AuthInterceptor;
 
+import okhttp3.OkHttpClient;
 import retrofit2.Call;
 import retrofit2.Retrofit;
 import retrofit2.converter.gson.GsonConverterFactory;
@@ -13,6 +18,7 @@ import retrofit2.converter.gson.GsonConverterFactory;
 public class ApiClient {
     private static final String BASE_URL = "https://prm392-backend.nducky.id.vn";
     private static Retrofit retrofit = null;
+    private static Retrofit authenticatedRetrofit = null;
 
     public static Retrofit getClient() {
         if (retrofit == null) {
@@ -22,6 +28,20 @@ public class ApiClient {
                     .build();
         }
         return retrofit;
+    }
+
+    public static Retrofit getAuthenticatedClient(Context context) {
+        AuthHelper authHelper = new AuthHelper(context);
+
+        OkHttpClient okHttpClient = new OkHttpClient.Builder()
+                .addInterceptor(new AuthInterceptor(authHelper))
+                .build();
+
+        return new Retrofit.Builder()
+                .baseUrl(BASE_URL)
+                .client(okHttpClient)
+                .addConverterFactory(GsonConverterFactory.create())
+                .build();
     }
 
     public static AuthApi getAuthApi() {
@@ -45,7 +65,7 @@ public class ApiClient {
     }
 
     // PHƯƠNG THỨC CHO VIỆC XÓA MỘT SẢN PHẨM TRONG GIỎ HÀNG
-    public static Call<ApiResponse<Object>> cartDeleteItem(String token,int cartItemId) {
+    public static Call<ApiResponse<Object>> cartDeleteItem(String token, int cartItemId) {
         return getCartApi().cartDeleteItem(token,cartItemId);
     }
 

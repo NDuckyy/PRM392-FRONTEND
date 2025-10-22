@@ -27,6 +27,9 @@ public class ProductResponse {
     @SerializedName("categoryID")
     private CategoryResponse categoryID;
 
+    @SerializedName("provider")
+    private Provider provider;
+
     // Getters
     public int getId() {
         return id;
@@ -60,6 +63,10 @@ public class ProductResponse {
         return categoryID;
     }
 
+    public Provider getProvider() {
+        return provider;
+    }
+
     // Setters
     public void setId(int id) {
         this.id = id;
@@ -91,5 +98,9 @@ public class ProductResponse {
 
     public void setCategoryID(CategoryResponse categoryID) {
         this.categoryID = categoryID;
+    }
+
+    public void setProvider(Provider provider) {
+        this.provider = provider;
     }
 }

@@ -9,7 +9,6 @@ import retrofit2.http.Path;
 
 public interface PaymentApi {
 
-
     @POST("/api/payment/url/{orderId}")
     Call<ApiResponse<String>> getPaymentUrl(@Header("Authorization") String authToken, @Path("orderId") Integer orderId);
 }

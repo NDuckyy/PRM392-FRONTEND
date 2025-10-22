@@ -20,8 +20,9 @@
         android:usesCleartextTraffic="true">
 
 
+        <!-- Launcher: Product List -->
         <activity
-            android:name=".CartActivity"
+            android:name=".ProductListActivity"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN"/>
@@ -29,6 +30,7 @@
             </intent-filter>
         </activity>
 
+        <!-- Auth Activities -->
         <activity
             android:name=".PaymentActivity"
             android:exported="true"
@@ -47,13 +49,50 @@
 
         </activity>
 
+        <activity
+            android:name=".BecomeProviderActivity"
+            android:exported="false"
+            android:windowSoftInputMode="adjustResize" />
+
+        <!-- Provider Activities -->
+        <activity
+            android:name=".ProviderDashboardActivity"
+            android:exported="false" />
+
+        <activity
+            android:name=".AddEditProductActivity"
+            android:exported="false"
+            android:windowSoftInputMode="adjustResize" />
+
+        <!-- Main Activity -->
 
         <activity
             android:name=".PaymentSuccessActivity"
             android:exported="false" />
 
+        <activity android:name=".LoginActivity"
+            android:exported="false" />
+
         <activity
-            android:name=".ProductListActivity"
+            android:name=".UserProfileActivity"
+            android:exported="false" />
+
+        <!-- Chat Activities -->
+        <activity
+            android:name=".ConversationListActivity"
+            android:exported="false" />
+
+        <activity
+            android:name=".ChatActivity"
+            android:exported="false"
+            android:windowSoftInputMode="adjustResize" />
+
+        <activity
+            android:name=".ProductDetailsActivity"
+            android:exported="false" />
+
+        <activity
+            android:name=".CartActivity"
             android:exported="false" />
 
 

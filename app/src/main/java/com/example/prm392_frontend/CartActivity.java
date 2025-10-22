@@ -36,10 +36,9 @@ import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
 
-public class CartActivity extends AppCompatActivity implements CartAdapter.CartAdapterListener {
+public class CartActivity extends BaseActivity implements CartAdapter.CartAdapterListener {
 
     // REFACTOR: Chuyển token ra làm biến toàn cục để dễ dàng thay đổi
-    private final String hardcodedToken = "eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJxdWFuIiwicm9sZSI6IlVTRVIiLCJleHAiOjE3NjExNDU1NjYsInVzZXJJZCI6OSwiaWF0IjoxNzYxMTQxOTY2fQ.ADawzgbGRUv8KKdHSEqYOITnk4qKoyfmMjeVYLz7i7k";
 
     private MaterialToolbar topAppBar;
     private RecyclerView recyclerViewCartItems;
@@ -120,7 +119,7 @@ public class CartActivity extends AppCompatActivity implements CartAdapter.CartA
 
     private void fetchCartData() {
         showLoading(true);
-        String token = hardcodedToken;
+        String token = authHelper.getToken();
         if (token == null || token.isEmpty()) {
             showEmptyView("Vui lòng đăng nhập để xem giỏ hàng.");
             return;
@@ -155,7 +154,7 @@ public class CartActivity extends AppCompatActivity implements CartAdapter.CartA
     @Override
     public void onUpdateQuantity(int cartItemId, int newQuantity) {
         showLoading(true);
-        String token = hardcodedToken;
+        String token = authHelper.getToken();
         if (token == null || token.isEmpty()) {
             Toast.makeText(this, "Phiên đăng nhập hết hạn.", Toast.LENGTH_SHORT).show();
             showDataView(); // Quay lại trạng thái hiển thị dữ liệu
@@ -196,7 +195,7 @@ public class CartActivity extends AppCompatActivity implements CartAdapter.CartA
 
     private void performDeleteItem(int cartItemId) {
         showLoading(true);
-        String token = hardcodedToken;
+        String token = authHelper.getToken();
         if (token == null || token.isEmpty()) {
             Toast.makeText(this, "Phiên đăng nhập hết hạn.", Toast.LENGTH_SHORT).show();
             showDataView();
@@ -234,7 +233,7 @@ public class CartActivity extends AppCompatActivity implements CartAdapter.CartA
             editTextAddress.requestFocus();
             return;
         }
-        String token = hardcodedToken;
+        String token = authHelper.getToken();
         if (token == null || token.isEmpty()) {
             Toast.makeText(this, "Phiên đăng nhập đã hết hạn.", Toast.LENGTH_LONG).show();
             return;
@@ -292,7 +291,7 @@ public class CartActivity extends AppCompatActivity implements CartAdapter.CartA
 
     private void performClearAllItems() {
         showLoading(true);
-        String token = hardcodedToken;
+        String token = authHelper.getToken();
         if (token == null || token.isEmpty()) {
             Toast.makeText(this, "Phiên đăng nhập hết hạn.", Toast.LENGTH_SHORT).show();
             showDataView();

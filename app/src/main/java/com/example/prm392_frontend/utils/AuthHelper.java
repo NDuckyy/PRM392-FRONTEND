@@ -45,16 +45,26 @@ public class AuthHelper {
     }
 
     /**
+     * Check if current user is a provider
+     */
+    public boolean isProvider() {
+        String role = getRole();
+        return role != null && role.equalsIgnoreCase("PROVIDER");
+    }
+
+    /**
      * Save authentication data
      */
     public void saveAuthData(String token, String username, String role) {
-        SharedPreferences.Editor editor = sharedPreferences.edit();
-        editor.putString(KEY_TOKEN, token);
-        editor.putString(KEY_USERNAME, username);
-        editor.putString(KEY_ROLE, role);
-        editor.putBoolean(KEY_IS_LOGGED_IN, true);
-        editor.apply();
+        boolean hasToken = token != null && !token.trim().isEmpty();
+        sharedPreferences.edit()
+                .putString("token", hasToken ? token : null)
+                .putString("username", username)
+                .putString("role", role)
+                .putBoolean("is_logged_in", hasToken)
+                .apply(); // hoặc .commit() nếu muốn đồng bộ
     }
+
 
     /**
      * Clear authentication data (logout)

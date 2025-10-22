@@ -1,4 +1,29 @@
 <resources>
     <string name="app_name">PRM392-frontend</string>
     <string name="title_activity_maps">MapsActivity</string>
+    <string name="desc_no_orders">No orders illustration</string>
+    <string name="desc_decorative_image">Decorative header background</string>
+    <string name="desc_user_avatar">User avatar</string>
+    <string name="desc_change_avatar">Change avatar</string>
+    <string name="desc_tabs_profile_orders">User tabs: Profile and Orders</string>
+
+    <!-- Labels -->
+    <string name="profile_information">Profile information</string>
+    <string name="label_username">Username</string>
+    <string name="label_email">Email</string>
+    <string name="label_phone">Phone number</string>
+    <string name="label_address">Address</string>
+    <string name="label_role">Role</string>
+
+    <!-- Actions -->
+    <string name="action_edit">Edit</string>
+    <string name="action_save">Save</string>
+    <string name="action_view_all">View all</string>
+    <string name="action_refresh">Refresh</string>
+    <string name="action_filter">Filter</string>
+
+    <!-- Orders -->
+    <string name="orders_title">Order History</string>
+    <string name="orders_subtitle">Recent 10 orders</string>
+    <string name="orders_empty">No orders yet</string>
 </resources>
