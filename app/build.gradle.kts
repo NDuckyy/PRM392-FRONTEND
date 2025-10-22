@@ -63,4 +63,16 @@ dependencies {
     implementation("androidx.core:core:1.12.0")
     implementation("androidx.appcompat:appcompat:1.6.1")
     implementation("me.leolin:ShortcutBadger:1.1.22@aar")
+
+    implementation("com.google.android.material:material:1.12.0")
+// hoặc mới hơn
+    implementation("androidx.appcompat:appcompat:1.7.0")
+    implementation("androidx.recyclerview:recyclerview:1.3.2")
+    implementation("androidx.core:core-ktx:1.13.1")
+// ok cả khi bạn code Java
+
+
+    implementation("com.squareup.okhttp3:okhttp:4.12.0")
+    implementation("com.squareup.okhttp3:logging-interceptor:4.12.0")
+    implementation("com.google.code.gson:gson:2.11.0")
 }
