@@ -28,7 +28,7 @@ public class PaymentActivity extends AppCompatActivity {
     private WebView webViewPayment;
     private ProgressBar progressBar;
 
-    private final String hardcodedToken = "eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJxdWFuIiwicm9sZSI6IlVTRVIiLCJleHAiOjE3NjEwNDQwODMsInVzZXJJZCI6OSwiaWF0IjoxNzYxMDQwNDgzfQ.xYWyu-1d9y8shkgahVACw1Z1DT7vE-SdsaufxnX4FR0";
+    private final String hardcodedToken = "eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJxdWFuIiwicm9sZSI6IlVTRVIiLCJleHAiOjE3NjExNDU1NjYsInVzZXJJZCI6OSwiaWF0IjoxNzYxMTQxOTY2fQ.ADawzgbGRUv8KKdHSEqYOITnk4qKoyfmMjeVYLz7i7k";
     public static final String EXTRA_ORDER_ID = "ORDER_ID";
 
     @Override
@@ -41,7 +41,7 @@ public class PaymentActivity extends AppCompatActivity {
         setupClickListeners();
         setupOnBackPressed();
 
-        int orderId = 6;
+        int orderId = 5;
 
         if (orderId == -1) {
             Toast.makeText(this, "Lỗi: Không có ID đơn hàng để thanh toán.", Toast.LENGTH_LONG).show();

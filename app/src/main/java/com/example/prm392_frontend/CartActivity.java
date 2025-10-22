@@ -39,7 +39,7 @@ import retrofit2.Response;
 public class CartActivity extends AppCompatActivity implements CartAdapter.CartAdapterListener {
 
     // REFACTOR: Chuyển token ra làm biến toàn cục để dễ dàng thay đổi
-    private final String hardcodedToken = "eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJxdWFuIiwicm9sZSI6IlVTRVIiLCJleHAiOjE3NjEwNDQwODMsInVzZXJJZCI6OSwiaWF0IjoxNzYxMDQwNDgzfQ.xYWyu-1d9y8shkgahVACw1Z1DT7vE-SdsaufxnX4FR0";
+    private final String hardcodedToken = "eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJxdWFuIiwicm9sZSI6IlVTRVIiLCJleHAiOjE3NjExNDU1NjYsInVzZXJJZCI6OSwiaWF0IjoxNzYxMTQxOTY2fQ.ADawzgbGRUv8KKdHSEqYOITnk4qKoyfmMjeVYLz7i7k";
 
     private MaterialToolbar topAppBar;
     private RecyclerView recyclerViewCartItems;
