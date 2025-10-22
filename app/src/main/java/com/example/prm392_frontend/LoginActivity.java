@@ -124,8 +124,10 @@ public class LoginActivity extends AppCompatActivity {
             setResult(RESULT_OK);
             finish();
         } else {
-            // Normal login flow - just finish and return to previous activity (ProductListActivity)
-            // Since ProductListActivity is the LAUNCHER, it will be in the back stack
+            // Navigate to ProductListActivity and clear back stack
+            Intent intent = new Intent(LoginActivity.this, ProductListActivity.class);
+            intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+            startActivity(intent);
             finish();
         }
     }

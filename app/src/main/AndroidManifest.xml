@@ -41,6 +41,21 @@
             android:exported="false"
             android:windowSoftInputMode="adjustResize" />
 
+        <activity
+            android:name=".BecomeProviderActivity"
+            android:exported="false"
+            android:windowSoftInputMode="adjustResize" />
+
+        <!-- Provider Activities -->
+        <activity
+            android:name=".ProviderDashboardActivity"
+            android:exported="false" />
+
+        <activity
+            android:name=".AddEditProductActivity"
+            android:exported="false"
+            android:windowSoftInputMode="adjustResize" />
+
         <!-- Main Activity -->
         <activity
             android:name=".MainActivity"
@@ -54,6 +69,16 @@
         <activity
             android:name=".UserProfileActivity"
             android:exported="false" />
+
+        <!-- Chat Activities -->
+        <activity
+            android:name=".ConversationListActivity"
+            android:exported="false" />
+
+        <activity
+            android:name=".ChatActivity"
+            android:exported="false"
+            android:windowSoftInputMode="adjustResize" />
 
     </application>
 </manifest>

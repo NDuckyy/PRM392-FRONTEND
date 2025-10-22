@@ -1,5 +1,6 @@
 package com.example.prm392_frontend;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.text.TextUtils;
 import android.util.Log;
@@ -127,6 +128,12 @@ public class UserProfileActivity extends BaseActivity {
             currentUser.address = text(ui.edtAddress);
             // Gọi API cập nhật (thay vì chỉ lưu local)
             updateProfile(currentUser);
+        });
+
+        // Become Provider Button
+        ui.btnBecomeProvider.setOnClickListener(v -> {
+            Intent intent = new Intent(UserProfileActivity.this, BecomeProviderActivity.class);
+            startActivity(intent);
         });
     }
 
@@ -306,6 +313,24 @@ public class UserProfileActivity extends BaseActivity {
         ui.edtPhone.setText(safe(u.phoneNumber));
         ui.edtAddress.setText(safe(u.address));
         ui.btnRoleChip.setText(TextUtils.isEmpty(u.role) ? "ROLE" : u.role);
+
+        // Show "Become Provider" button only if user role is "USER"
+        if ("USER".equalsIgnoreCase(u.role)) {
+            ui.btnBecomeProvider.setVisibility(View.VISIBLE);
+        } else {
+            ui.btnBecomeProvider.setVisibility(View.GONE);
+        }
+
+        // Make role chip clickable for PROVIDER to open dashboard
+        if ("PROVIDER".equalsIgnoreCase(u.role)) {
+            ui.btnRoleChip.setOnClickListener(v -> {
+                Intent intent = new Intent(UserProfileActivity.this, ProviderDashboardActivity.class);
+                startActivity(intent);
+            });
+        } else {
+            ui.btnRoleChip.setOnClickListener(null);
+            ui.btnRoleChip.setClickable(false);
+        }
     }
 
     private void setEditMode(boolean enable) {

@@ -2,6 +2,9 @@ package com.example.prm392_frontend;
 
 import android.os.Parcel;
 import android.os.Parcelable;
+
+import com.example.prm392_frontend.models.CategoryResponse;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -17,6 +20,15 @@ public class Product implements Parcelable {
     private String brand;
     private int popularity;
     private String specifications;
+
+    // Additional fields for backend compatibility
+    private String productName;
+    private String briefDescription;
+    private String fullDescription;
+    private String technicalSpecifications;
+    private CategoryResponse categoryID;
+    private String providerId;
+    private String providerName;
 
     public Product(int id, String name, String description, double price, String imageUrl,
                    List<String> imageUrls, String category, double rating, String brand,
@@ -46,6 +58,8 @@ public class Product implements Parcelable {
         brand = in.readString();
         popularity = in.readInt();
         specifications = in.readString();
+        providerId = in.readString();
+        providerName = in.readString();
     }
 
     public static final Creator<Product> CREATOR = new Creator<Product>() {
@@ -104,6 +118,74 @@ public class Product implements Parcelable {
         return specifications;
     }
 
+    // Getters for backend-compatible fields
+    public String getProductName() {
+        return productName != null ? productName : name;
+    }
+
+    public String getBriefDescription() {
+        return briefDescription;
+    }
+
+    public String getFullDescription() {
+        return fullDescription;
+    }
+
+    public String getTechnicalSpecifications() {
+        return technicalSpecifications != null ? technicalSpecifications : specifications;
+    }
+
+    public String getImageURL() {
+        return imageUrl;
+    }
+
+    public CategoryResponse getCategoryID() {
+        return categoryID;
+    }
+
+    // Setters for backend-compatible fields
+    public void setProductName(String productName) {
+        this.productName = productName;
+        this.name = productName;
+    }
+
+    public void setBriefDescription(String briefDescription) {
+        this.briefDescription = briefDescription;
+    }
+
+    public void setFullDescription(String fullDescription) {
+        this.fullDescription = fullDescription;
+        this.description = fullDescription;
+    }
+
+    public void setTechnicalSpecifications(String technicalSpecifications) {
+        this.technicalSpecifications = technicalSpecifications;
+        this.specifications = technicalSpecifications;
+    }
+
+    public void setCategoryID(CategoryResponse categoryID) {
+        this.categoryID = categoryID;
+        if (categoryID != null) {
+            this.category = categoryID.getCategoryName();
+        }
+    }
+
+    public String getProviderId() {
+        return providerId;
+    }
+
+    public void setProviderId(String providerId) {
+        this.providerId = providerId;
+    }
+
+    public String getProviderName() {
+        return providerName;
+    }
+
+    public void setProviderName(String providerName) {
+        this.providerName = providerName;
+    }
+
     @Override
     public int describeContents() {
         return 0;
@@ -122,5 +204,7 @@ public class Product implements Parcelable {
         dest.writeString(brand);
         dest.writeInt(popularity);
         dest.writeString(specifications);
+        dest.writeString(providerId);
+        dest.writeString(providerName);
     }
 }

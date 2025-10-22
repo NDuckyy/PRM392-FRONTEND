@@ -42,7 +42,7 @@ public class ProductMapper {
             description = response.getBriefDescription();
         }
 
-        return new Product(
+        Product product = new Product(
                 response.getId(),
                 response.getProductName() != null ? response.getProductName() : "Unknown Product",
                 description,
@@ -55,6 +55,23 @@ public class ProductMapper {
                 popularity,
                 response.getTechnicalSpecifications() != null ? response.getTechnicalSpecifications() : ""
         );
+
+        // Set additional backend fields
+        product.setProductName(response.getProductName());
+        product.setBriefDescription(response.getBriefDescription());
+        product.setFullDescription(response.getFullDescription());
+        product.setTechnicalSpecifications(response.getTechnicalSpecifications());
+        product.setCategoryID(response.getCategoryID());
+
+        // Set provider info
+        if (response.getProvider() != null) {
+            if (response.getProvider().getUser() != null) {
+                product.setProviderId(response.getProvider().getUser().getUsername());
+            }
+            product.setProviderName(response.getProvider().getProviderName());
+        }
+
+        return product;
     }
 
     /**
@@ -71,5 +88,12 @@ public class ProductMapper {
             }
         }
         return products;
+    }
+
+    /**
+     * Alias for fromResponse - for consistency
+     */
+    public static Product toProduct(ProductResponse response) {
+        return fromResponse(response);
     }
 }
