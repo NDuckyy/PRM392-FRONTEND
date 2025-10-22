@@ -3,6 +3,7 @@ package com.example.prm392_frontend.api;
 import android.content.Context;
 
 import com.example.prm392_frontend.models.ApiResponse;
+import com.example.prm392_frontend.models.CartAddRequest; // Thêm import
 import com.example.prm392_frontend.models.CartItemUpdateRequest;
 import com.example.prm392_frontend.models.CartItemUpdateResponse;
 import com.example.prm392_frontend.models.OrderRequest;
@@ -54,6 +55,11 @@ public class ApiClient {
 
     public static CartApi getCartApi() {
         return getClient().create(CartApi.class);
+    }
+
+    // PHƯƠNG THỨC CHO VIỆC THÊM SẢN PHẨM VÀO GIỎ HÀNG
+    public static Call<ApiResponse<Object>> addProductToCart(String authToken, CartAddRequest request) {
+        return getCartApi().addProductToCart(authToken, request);
     }
 
     public static CartApi cartUpdateQuantity(){

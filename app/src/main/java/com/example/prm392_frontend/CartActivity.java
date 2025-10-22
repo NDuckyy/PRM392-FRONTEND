@@ -117,6 +117,14 @@ public class CartActivity extends BaseActivity implements CartAdapter.CartAdapte
         });
     }
 
+    @Override
+    protected void onResume() {
+        super.onResume();
+        // Gọi fetchCartData() mỗi khi activity quay trở lại
+        // Điều này đảm bảo dữ liệu giỏ hàng luôn được làm mới
+        fetchCartData();
+    }
+
     private void fetchCartData() {
         showLoading(true);
         String token = authHelper.getToken();
@@ -252,15 +260,20 @@ public class CartActivity extends BaseActivity implements CartAdapter.CartAdapte
                         Toast.makeText(CartActivity.this, "Đặt hàng COD thành công!", Toast.LENGTH_LONG).show();
                         fetchCartData();
                         finish();
+                        // Trong handlePlaceOrder() của CartActivity.java
                     } else {
                         int orderId = response.body().getData().getOrderId();
                         // Chuyển sang PaymentActivity và truyền orderId
                         Intent intent = new Intent(CartActivity.this, PaymentActivity.class);
                         intent.putExtra(PaymentActivity.EXTRA_ORDER_ID, orderId);
                         startActivity(intent);
-                        finish();
-                        // Không nên finish() ở đây ngay, để người dùng có thể quay lại
+
+                        // BỎ DÒNG finish() Ở ĐÂY.
+                        // Việc đóng CartActivity sẽ được xử lý bởi PaymentActivity
+                        // khi thanh toán thành công, như vậy sẽ cho phép người dùng
+                        // nhấn "Back" từ màn hình thanh toán để quay lại giỏ hàng nếu muốn.
                     }
+
                 } else {
                     showDataView(); // Hiển thị lại UI
                     String errorMessage = (response.body() != null && response.body().getMessage() != null) ? response.body().getMessage() : "Đặt hàng thất bại.";

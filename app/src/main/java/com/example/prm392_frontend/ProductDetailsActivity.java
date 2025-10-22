@@ -3,6 +3,7 @@ package com.example.prm392_frontend;
 import android.animation.ObjectAnimator;
 import android.content.Intent;
 import android.os.Bundle;
+import android.util.Log; // Thêm import
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -19,6 +20,9 @@ import androidx.recyclerview.widget.RecyclerView;
 import androidx.viewpager2.widget.ViewPager2;
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.load.engine.DiskCacheStrategy;
+import com.example.prm392_frontend.api.ApiClient; // Thêm import
+import com.example.prm392_frontend.models.ApiResponse; // Thêm import
+import com.example.prm392_frontend.models.CartAddRequest; // Thêm import
 import com.example.prm392_frontend.utils.AuthHelper;
 import com.google.android.material.appbar.CollapsingToolbarLayout;
 import com.google.android.material.appbar.MaterialToolbar;
@@ -27,8 +31,13 @@ import java.text.NumberFormat;
 import java.util.List;
 import java.util.Locale;
 
+import retrofit2.Call; // Thêm import
+import retrofit2.Callback; // Thêm import
+import retrofit2.Response; // Thêm import
+
 public class ProductDetailsActivity extends AppCompatActivity {
 
+    private static final String TAG = "ProductDetailsActivity"; // Thêm TAG để log
     private static final int REQUEST_CODE_LOGIN = 1001;
 
     private ViewPager2 imageViewPager;
@@ -207,10 +216,54 @@ public class ProductDetailsActivity extends AppCompatActivity {
     }
 
     private void addToCart() {
-        // TODO: Implement actual cart API call here
-        // For now, just show success message
-        Toast.makeText(this, "Added " + quantity + "x " + product.getName() + " to cart", Toast.LENGTH_SHORT).show();
+        // Disable button to prevent multiple clicks
+        addToCartButton.setEnabled(false);
+        String originalButtonText = addToCartButton.getText().toString();
+        addToCartButton.setText("Adding...");
 
+        String token = "Bearer " + authHelper.getToken();
+        CartAddRequest request = new CartAddRequest(product.getId(), quantity);
+
+        Call<ApiResponse<Object>> call = ApiClient.addProductToCart(token, request);
+
+        call.enqueue(new Callback<ApiResponse<Object>>() {
+            @Override
+            public void onResponse(Call<ApiResponse<Object>> call, Response<ApiResponse<Object>> response) {
+                // Re-enable button
+                addToCartButton.setEnabled(true);
+                addToCartButton.setText(originalButtonText);
+
+                if (response.isSuccessful() && response.body() != null) {
+                    // Show success message
+                    Toast.makeText(ProductDetailsActivity.this, "Added to cart successfully!", Toast.LENGTH_SHORT).show();
+
+                    // Animate button on success
+                    animateButtonSuccess();
+                } else {
+                    // Handle API error (e.g., product out of stock, invalid request)
+                    String errorMessage = "Failed to add to cart. Please try again.";
+                    if (response.body() != null && response.body().getMessage() != null) {
+                        errorMessage = response.body().getMessage();
+                    }
+                    Toast.makeText(ProductDetailsActivity.this, errorMessage, Toast.LENGTH_LONG).show();
+                    Log.e(TAG, "API Error: " + response.code() + " " + response.message());
+                }
+            }
+
+            @Override
+            public void onFailure(Call<ApiResponse<Object>> call, Throwable t) {
+                // Re-enable button
+                addToCartButton.setEnabled(true);
+                addToCartButton.setText(originalButtonText);
+
+                // Handle network failure
+                Toast.makeText(ProductDetailsActivity.this, "Network error. Please check your connection.", Toast.LENGTH_LONG).show();
+                Log.e(TAG, "Network Failure: ", t);
+            }
+        });
+    }
+
+    private void animateButtonSuccess() {
         // Animate button
         SpringAnimation scaleX = new SpringAnimation(addToCartButton, DynamicAnimation.SCALE_X, 1f);
         scaleX.setStartValue(0.9f);
@@ -234,6 +287,8 @@ public class ProductDetailsActivity extends AppCompatActivity {
         if (requestCode == REQUEST_CODE_LOGIN && resultCode == RESULT_OK) {
             // User logged in successfully, now add to cart
             if (authHelper.isLoggedIn()) {
+                // Update AuthHelper to make sure it has the latest user info
+                authHelper = new AuthHelper(this);
                 addToCart();
             }
         }

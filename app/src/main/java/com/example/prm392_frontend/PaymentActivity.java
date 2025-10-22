@@ -16,6 +16,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import com.example.prm392_frontend.api.ApiClient;
 import com.example.prm392_frontend.api.PaymentApi;
 import com.example.prm392_frontend.models.ApiResponse;
+import com.example.prm392_frontend.utils.AuthHelper;
 import com.google.android.material.appbar.MaterialToolbar;
 
 import retrofit2.Call;
@@ -28,7 +29,7 @@ public class PaymentActivity extends AppCompatActivity {
     private WebView webViewPayment;
     private ProgressBar progressBar;
 
-    private final String hardcodedToken = "eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJxdWFuIiwicm9sZSI6IlVTRVIiLCJleHAiOjE3NjExNDU1NjYsInVzZXJJZCI6OSwiaWF0IjoxNzYxMTQxOTY2fQ.ADawzgbGRUv8KKdHSEqYOITnk4qKoyfmMjeVYLz7i7k";
+    private AuthHelper authHelper;
     public static final String EXTRA_ORDER_ID = "ORDER_ID";
 
     @Override
@@ -41,8 +42,17 @@ public class PaymentActivity extends AppCompatActivity {
         setupClickListeners();
         setupOnBackPressed();
 
-        int orderId = 5;
+        // ====================================================================
+        // SỬA 1: Khởi tạo authHelper để có thể lấy token
+        // ====================================================================
+        authHelper = new AuthHelper(this);
 
+        // ====================================================================
+        // SỬA 2: Lấy orderId được truyền từ CartActivity, không gán cứng
+        // ====================================================================
+        int orderId = getIntent().getIntExtra(EXTRA_ORDER_ID, -1);
+
+        // Kiểm tra xem có nhận được orderId hợp lệ không
         if (orderId == -1) {
             Toast.makeText(this, "Lỗi: Không có ID đơn hàng để thanh toán.", Toast.LENGTH_LONG).show();
             finish();
@@ -50,8 +60,19 @@ public class PaymentActivity extends AppCompatActivity {
         }
 
         // Bắt đầu quá trình lấy URL và tải nó
-        String authHeader = "Bearer " + hardcodedToken;
-        fetchPaymentUrlAndLoad(authHeader,orderId);
+        String token = authHelper.getToken();
+
+        // ====================================================================
+        // SỬA 3: Kiểm tra token trước khi gọi API
+        // ====================================================================
+        if (token == null || token.isEmpty()) {
+            Toast.makeText(this, "Lỗi: Người dùng chưa đăng nhập hoặc phiên đã hết hạn.", Toast.LENGTH_LONG).show();
+            finish();
+            return;
+        }
+
+        String authHeader = "Bearer " + token;
+        fetchPaymentUrlAndLoad(authHeader, orderId);
     }
 
     private void initViews() {
@@ -82,7 +103,6 @@ public class PaymentActivity extends AppCompatActivity {
             }
 
             // Hàm này cực kỳ quan trọng để bắt Deep Link khi thanh toán xong
-            // Trong PaymentActivity.java
             @Override
             public boolean shouldOverrideUrlLoading(WebView view, WebResourceRequest request) {
                 String url = request.getUrl().toString();
@@ -93,18 +113,13 @@ public class PaymentActivity extends AppCompatActivity {
                     Intent intent = new Intent(PaymentActivity.this, PaymentSuccessActivity.class);
                     intent.setData(request.getUrl());
 
-                    // ====================================================================
-                    // SỬA LỖI Ở ĐÂY
-                    // ====================================================================
-                    // Thêm cờ này để xóa tất cả các Activity nằm trên đầu của Activity mới
-                    // trong cùng một task. Cụ thể ở đây nó sẽ xóa CartActivity.
+                    // Thêm cờ này để xóa các Activity trung gian (như CartActivity)
                     intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_NEW_TASK);
 
                     startActivity(intent);
 
-                    // Sau khi đã start Activity mới với cờ CLEAR_TOP,
-                    // chúng ta cũng đóng luôn Activity hiện tại.
-                    finish(); // Dòng này bây giờ đã đúng
+                    // Đóng Activity hiện tại sau khi đã chuyển hướng
+                    finish();
 
                     return true; // Đã xử lý URL
                 }
@@ -120,29 +135,31 @@ public class PaymentActivity extends AppCompatActivity {
 
     /**
      * Gọi API để lấy URL thanh toán từ backend và sau đó tải nó lên WebView.
+     * @param authen  Chuỗi token xác thực (ví dụ: "Bearer ...")
      * @param orderId ID của đơn hàng cần thanh toán.
      */
-    private void fetchPaymentUrlAndLoad(String authen,int orderId) {
+    private void fetchPaymentUrlAndLoad(String authen, int orderId) {
         progressBar.setVisibility(View.VISIBLE);
         webViewPayment.setVisibility(View.GONE);
 
         PaymentApi paymentApi = ApiClient.getPaymentUrl();
 
-        paymentApi.getPaymentUrl(authen,orderId).enqueue(new Callback<ApiResponse<String>>() {
+        paymentApi.getPaymentUrl(authen, orderId).enqueue(new Callback<ApiResponse<String>>() {
             @Override
             public void onResponse(Call<ApiResponse<String>> call, Response<ApiResponse<String>> response) {
-                if (response.isSuccessful() && response.body() != null && response.body().getData() != null) {
+                if (response.isSuccessful() && response.body() != null && response.body().isSuccess() && response.body().getData() != null) {
                     // Lấy URL từ trong đối tượng "data"
                     String paymentUrl = response.body().getData();
-
-                    // =================== ĐIỂM THAY ĐỔI QUAN TRỌNG ===================
                     // Ra lệnh cho WebView tải nội dung từ URL đã nhận được
                     webViewPayment.loadUrl(paymentUrl);
-                    // =============================================================
-
                 } else {
                     progressBar.setVisibility(View.GONE);
-                    Toast.makeText(PaymentActivity.this, "Không thể lấy link thanh toán. Mã lỗi: " + response.code(), Toast.LENGTH_LONG).show();
+                    String errorMessage = "Không thể lấy link thanh toán. Mã lỗi: " + response.code();
+                    if (response.body() != null && response.body().getMessage() != null) {
+                        errorMessage = response.body().getMessage();
+                    }
+                    Toast.makeText(PaymentActivity.this, errorMessage, Toast.LENGTH_LONG).show();
+                    // Đóng activity sau một khoảng thời gian ngắn để người dùng đọc thông báo
                     new android.os.Handler().postDelayed(PaymentActivity.this::finish, 2000);
                 }
             }
@@ -160,9 +177,12 @@ public class PaymentActivity extends AppCompatActivity {
         getOnBackPressedDispatcher().addCallback(this, new OnBackPressedCallback(true) {
             @Override
             public void handleOnBackPressed() {
+                // Nếu WebView có thể quay lại trang trước đó (trong lịch sử của WebView)
                 if (webViewPayment.canGoBack()) {
                     webViewPayment.goBack();
                 } else {
+                    // Nếu không, thực hiện hành vi quay lại mặc định (đóng Activity)
+                    // Tắt callback này để tránh vòng lặp vô hạn và gọi lại onBackPressed
                     setEnabled(false);
                     getOnBackPressedDispatcher().onBackPressed();
                 }
