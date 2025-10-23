@@ -5,6 +5,7 @@ import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
 import android.widget.ProgressBar;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.recyclerview.widget.LinearLayoutManager;
@@ -41,17 +42,40 @@ public class ConversationListActivity extends BaseActivity
 
         setupToolbar();
         setupViews();
+
+        // Check if user is logged in
+        if (!authHelper.isLoggedIn()) {
+            showLoginRequired();
+            return;
+        }
+
         setupRecyclerView();
         startRealtimeListener();
+    }
+
+    /**
+     * Show message when user is not logged in
+     */
+    private void showLoginRequired() {
+        progressBar.setVisibility(View.GONE);
+        rvConversations.setVisibility(View.GONE);
+        emptyState.setVisibility(View.VISIBLE);
+
+        // Update empty state message to show login required
+        TextView emptyMessage = emptyState.findViewById(R.id.tvEmptyState);
+        if (emptyMessage != null) {
+            emptyMessage.setText("Please login to view your messages");
+        }
     }
 
     /**
      * Start Firestore realtime listener for conversations
      */
     private void startRealtimeListener() {
+        String currentUserId = authHelper.getUsername();
         Log.d(TAG, "Starting Firestore realtime listener for conversations");
         setLoading(true);
-        firestoreManager.listenToConversations(50, this);
+        firestoreManager.listenToConversations(50, currentUserId, this);
     }
 
     private void setupToolbar() {
@@ -121,6 +145,23 @@ public class ConversationListActivity extends BaseActivity
         Intent intent = new Intent(this, ChatActivity.class);
         intent.putExtra("conversationId", conversation.getConversationId());
         startActivity(intent);
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        // Check login status when activity resumes (e.g., after logout)
+        if (!authHelper.isLoggedIn()) {
+            // User logged out, clear conversations and show login required
+            if (firestoreManager != null) {
+                firestoreManager.stopAllListeners();
+            }
+            conversations.clear();
+            if (adapter != null) {
+                adapter.updateConversations(conversations);
+            }
+            showLoginRequired();
+        }
     }
 
     @Override

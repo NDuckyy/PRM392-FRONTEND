@@ -68,15 +68,16 @@ public class FirestoreManager {
     }
 
     /**
-     * Listen to realtime conversations list
+     * Listen to realtime conversations list for a specific user
      */
-    public void listenToConversations(int limit, OnConversationsUpdateListener listener) {
+    public void listenToConversations(int limit, String currentUserId, OnConversationsUpdateListener listener) {
         // Remove old listener if exists
         stopConversationListening();
 
-        Log.d(TAG, "Starting to listen to conversations");
+        Log.d(TAG, "Starting to listen to conversations for user: " + currentUserId);
 
         // Listen to conversations collection with realtime updates
+        // Filter conversations where conversationId contains currentUserId
         conversationListener = db.collection(COLLECTION_CONVERSATIONS)
                 .orderBy("updatedAt", Query.Direction.DESCENDING)
                 .limit(limit)
@@ -90,12 +91,16 @@ public class FirestoreManager {
                     if (snapshots != null && !snapshots.isEmpty()) {
                         List<ConversationSummary> conversations = new ArrayList<>();
                         for (DocumentSnapshot doc : snapshots.getDocuments()) {
-                            ConversationSummary conv = documentToConversation(doc);
-                            if (conv != null) {
-                                conversations.add(conv);
+                            String conversationId = doc.getId();
+                            // Only include conversations where conversationId contains current userId
+                            if (conversationId != null && conversationId.contains(currentUserId)) {
+                                ConversationSummary conv = documentToConversation(doc);
+                                if (conv != null) {
+                                    conversations.add(conv);
+                                }
                             }
                         }
-                        Log.d(TAG, "Received " + conversations.size() + " conversations from Firestore");
+                        Log.d(TAG, "Received " + conversations.size() + " conversations for user " + currentUserId);
                         listener.onConversationsUpdated(conversations);
                     } else {
                         Log.d(TAG, "No conversations yet");
