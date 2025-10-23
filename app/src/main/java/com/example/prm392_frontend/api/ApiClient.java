@@ -6,6 +6,7 @@ import com.example.prm392_frontend.models.ApiResponse;
 import com.example.prm392_frontend.models.CartAddRequest; // Thêm import
 import com.example.prm392_frontend.models.CartItemUpdateRequest;
 import com.example.prm392_frontend.models.CartItemUpdateResponse;
+import com.example.prm392_frontend.models.LocationResponse;
 import com.example.prm392_frontend.models.OrderRequest;
 import com.example.prm392_frontend.models.OrderResponse;
 import com.example.prm392_frontend.utils.AuthHelper;
@@ -95,5 +96,14 @@ public class ApiClient {
     public static Call<ApiResponse<OrderResponse>> createOrder(String authToken, OrderRequest orderRequest) {
         return getOrderApi().create(authToken, orderRequest);
     }
+
+    public static LocationApi getLocationApi() {
+        return getClient().create(LocationApi.class);
+    }
+
+    public static Call<LocationResponse> getLocationById(int id) {
+        return getLocationApi().getLocation(id);
+    }
+
 
 }

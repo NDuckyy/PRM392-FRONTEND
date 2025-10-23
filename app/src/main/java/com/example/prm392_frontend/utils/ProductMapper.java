@@ -66,7 +66,7 @@ public class ProductMapper {
         // Set provider info
         if (response.getProvider() != null) {
             if (response.getProvider().getUser() != null) {
-                product.setProviderId(response.getProvider().getUser().getUsername());
+                product.setProviderId(response.getProvider().getId());
             }
             product.setProviderName(response.getProvider().getProviderName());
         }

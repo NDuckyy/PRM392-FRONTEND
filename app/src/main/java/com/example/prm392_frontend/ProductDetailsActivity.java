@@ -27,6 +27,8 @@ import com.example.prm392_frontend.utils.AuthHelper;
 import com.google.android.material.appbar.CollapsingToolbarLayout;
 import com.google.android.material.appbar.MaterialToolbar;
 import com.google.android.material.button.MaterialButton;
+import com.google.android.material.floatingactionbutton.FloatingActionButton;
+
 import java.text.NumberFormat;
 import java.util.List;
 import java.util.Locale;
@@ -56,6 +58,9 @@ public class ProductDetailsActivity extends AppCompatActivity {
     private int quantity = 1;
     private AuthHelper authHelper;
 
+    private FloatingActionButton btnDirection;
+
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -70,6 +75,8 @@ public class ProductDetailsActivity extends AppCompatActivity {
             finish();
             return;
         }
+        btnDirection = findViewById(R.id.btn_direction);
+        btnDirection.setOnClickListener(v -> fetchLocationAndOpenMaps());
 
         // Initialize views
         MaterialToolbar toolbar = findViewById(R.id.toolbar);
@@ -162,7 +169,7 @@ public class ProductDetailsActivity extends AppCompatActivity {
             return;
         }
 
-        String providerId = product.getProviderId();
+        String providerId = String.valueOf(product.getProviderId());
         String providerName = product.getProviderName();
 
         if (providerId != null && !providerId.isEmpty()) {
@@ -389,4 +396,63 @@ public class ProductDetailsActivity extends AppCompatActivity {
             }
         }
     }
+
+    private void fetchLocationAndOpenMaps() {
+        btnDirection.setEnabled(false);
+
+        int providerIdInt;
+        try {
+            providerIdInt = product.getProviderId(); // hoặc product.getProviderLocationId()
+        } catch (Exception e) {
+            Toast.makeText(this, "Provider ID không hợp lệ", Toast.LENGTH_SHORT).show();
+            btnDirection.setEnabled(true);
+            return;
+        }
+
+        ApiClient.getLocationById(providerIdInt).enqueue(new retrofit2.Callback<com.example.prm392_frontend.models.LocationResponse>() {
+            @Override
+            public void onResponse(retrofit2.Call<com.example.prm392_frontend.models.LocationResponse> call,
+                                   retrofit2.Response<com.example.prm392_frontend.models.LocationResponse> response) {
+                btnDirection.setEnabled(true);
+                if (!response.isSuccessful() || response.body() == null) {
+                    Toast.makeText(ProductDetailsActivity.this, "Không lấy được vị trí cửa hàng", Toast.LENGTH_LONG).show();
+                    return;
+                }
+
+                com.example.prm392_frontend.models.LocationResponse body = response.body();
+                double lat = body.latitude;
+                double lng = body.longitude;
+                String label = (body.provider != null && body.provider.providerName != null)
+                        ? body.provider.providerName
+                        : (product.getProviderName() != null ? product.getProviderName() : "Cửa hàng");
+
+                android.net.Uri gmmIntentUri = android.net.Uri.parse(
+                        "geo:0,0?q=" + lat + "," + lng + "(" + android.net.Uri.encode(label) + ")");
+
+                Intent mapIntent = new Intent(Intent.ACTION_VIEW, gmmIntentUri);
+                mapIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                mapIntent.setPackage("com.google.android.apps.maps"); // ưu tiên Google Maps
+
+                try {
+                    startActivity(mapIntent);
+                } catch (Exception e) {
+                    // fallback cho bất kỳ app bản đồ nào
+                    mapIntent.setPackage(null);
+                    try {
+                        startActivity(mapIntent);
+                    } catch (Exception ex) {
+                        Toast.makeText(ProductDetailsActivity.this, "Không tìm thấy ứng dụng bản đồ", Toast.LENGTH_LONG).show();
+                    }
+                }
+            }
+
+            @Override
+            public void onFailure(retrofit2.Call<com.example.prm392_frontend.models.LocationResponse> call, Throwable t) {
+                btnDirection.setEnabled(true);
+                Toast.makeText(ProductDetailsActivity.this, "Lỗi mạng. Vui lòng thử lại.", Toast.LENGTH_LONG).show();
+                Log.e(TAG, "fetchLocationAndOpenMaps failure", t);
+            }
+        });
+    }
+
 }
