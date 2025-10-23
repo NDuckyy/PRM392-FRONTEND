@@ -8,6 +8,10 @@
     <!-- Quyền truy cập Internet để tải ảnh -->
     <uses-permission android:name="android.permission.INTERNET" />
 
+    <!-- ✅ Thêm quyền truy cập vị trí -->
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+
     <application
         android:allowBackup="true"
         android:dataExtractionRules="@xml/data_extraction_rules"

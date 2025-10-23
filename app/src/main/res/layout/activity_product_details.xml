@@ -145,6 +145,7 @@
 
                     </LinearLayout>
 
+
                     <ImageView
                         android:layout_width="24dp"
                         android:layout_height="24dp"
@@ -153,8 +154,17 @@
                         app:tint="@color/orange_primary" />
 
                 </LinearLayout>
-
             </com.google.android.material.card.MaterialCardView>
+            <com.google.android.material.floatingactionbutton.FloatingActionButton
+                android:id="@+id/btn_direction"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="bottom|end"
+                android:layout_margin="20dp"
+                app:srcCompat="@android:drawable/ic_dialog_map"
+                app:tint="@android:color/white"
+                app:backgroundTint="@color/orange_primary"
+                android:contentDescription="Chỉ đường đến cửa hàng" />
 
             <TextView
                 android:layout_width="wrap_content"

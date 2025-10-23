@@ -43,11 +43,13 @@ import okhttp3.Request;
 import okhttp3.Response;
 
 public class MapsActivity extends AppCompatActivity {
+
     private MapView map;
     private final int REQUEST_PERMISSIONS_REQUEST_CODE = 1;
 
-    private final double STORE_LAT = 21.028511;
-    private final double STORE_LNG = 105.804817;
+    private double STORE_LAT = 0;
+    private double STORE_LNG = 0;
+    private String STORE_ADDRESS = "Cửa hàng";
 
     private GeoPoint currentLocation;
     private FusedLocationProviderClient fusedLocationClient;
@@ -61,13 +63,24 @@ public class MapsActivity extends AppCompatActivity {
         Configuration.getInstance().setUserAgentValue(getPackageName());
         setContentView(R.layout.activity_maps);
 
+        // ✅ Nhận dữ liệu truyền từ ProductDetailsActivity
+        STORE_LAT = getIntent().getDoubleExtra("store_lat", 0);
+        STORE_LNG = getIntent().getDoubleExtra("store_lng", 0);
+        STORE_ADDRESS = getIntent().getStringExtra("store_address");
+
+        if (STORE_LAT == 0 || STORE_LNG == 0) {
+            Toast.makeText(this, "Không có dữ liệu vị trí cửa hàng", Toast.LENGTH_SHORT).show();
+            finish();
+            return;
+        }
+
         map = findViewById(R.id.map);
         map.setTileSource(TileSourceFactory.MAPNIK);
         map.setMultiTouchControls(true);
 
         txtInfo = findViewById(R.id.txtInfo);
 
-        // Marker cửa hàng
+        // ✅ Marker cửa hàng
         IMapController mapController = map.getController();
         GeoPoint storePoint = new GeoPoint(STORE_LAT, STORE_LNG);
         mapController.setZoom(15.0);
@@ -75,12 +88,13 @@ public class MapsActivity extends AppCompatActivity {
 
         Marker storeMarker = new Marker(map);
         storeMarker.setPosition(storePoint);
-        storeMarker.setTitle("My Store");
+        storeMarker.setTitle(STORE_ADDRESS != null ? STORE_ADDRESS : "Cửa hàng");
         storeMarker.setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_BOTTOM);
         map.getOverlays().add(storeMarker);
 
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(this);
 
+        // ✅ Nút thao tác
         Button btnMyLocation = findViewById(R.id.btnMyLocation);
         btnMyLocation.setOnClickListener(v -> requestCurrentLocation(false));
 
@@ -119,7 +133,6 @@ public class MapsActivity extends AppCompatActivity {
                     Toast.makeText(MapsActivity.this, "Không tìm thấy vị trí GPS", Toast.LENGTH_SHORT).show();
                 }
 
-                // dừng sau khi lấy 1 lần
                 fusedLocationClient.removeLocationUpdates(this);
             }
         }, getMainLooper());
@@ -136,7 +149,7 @@ public class MapsActivity extends AppCompatActivity {
 
         userMarker = new Marker(map);
         userMarker.setPosition(currentLocation);
-        userMarker.setTitle("You are here");
+        userMarker.setTitle("Vị trí của bạn");
         userMarker.setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_BOTTOM);
         map.getOverlays().add(userMarker);
 
@@ -144,6 +157,7 @@ public class MapsActivity extends AppCompatActivity {
         map.getController().setZoom(17.0);
     }
 
+    // ✅ Gọi API OSRM để vẽ tuyến đường
     private void getRoute(GeoPoint start, GeoPoint end) {
         String url = "https://router.project-osrm.org/route/v1/driving/"
                 + start.getLongitude() + "," + start.getLatitude() + ";"
@@ -195,6 +209,8 @@ public class MapsActivity extends AppCompatActivity {
 
                     } catch (Exception e) {
                         e.printStackTrace();
+                        runOnUiThread(() ->
+                                Toast.makeText(MapsActivity.this, "Lỗi xử lý dữ liệu bản đồ", Toast.LENGTH_SHORT).show());
                     }
                 }
             }
