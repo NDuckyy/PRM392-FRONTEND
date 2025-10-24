@@ -2,7 +2,10 @@ package com.example.prm392_frontend;
 
 import android.content.Intent;
 import android.os.Bundle;
+import android.view.Gravity;
+import android.view.LayoutInflater;
 import android.view.View;
+import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.EditText;
@@ -18,11 +21,13 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.prm392_frontend.api.ApiClient;
 import com.example.prm392_frontend.models.ApiResponse;
+import com.example.prm392_frontend.models.CartItemResponse;
 import com.example.prm392_frontend.models.CartItemUpdateRequest;
 import com.example.prm392_frontend.models.CartItemUpdateResponse;
 import com.example.prm392_frontend.models.CartResponse;
 import com.example.prm392_frontend.models.OrderRequest;
 import com.example.prm392_frontend.models.OrderResponse;
+import com.example.prm392_frontend.models.ProductResponse;
 import com.example.prm392_frontend.utils.AuthHelper;
 // Sửa lại import, không cần import CartAdapter 2 lần
 // import com.example.prm392_frontend.CartAdapter;
@@ -159,15 +164,76 @@ public class CartActivity extends BaseActivity implements CartAdapter.CartAdapte
         });
     }
 
+    /**
+     * Phương thức này đã được cập nhật để gọi API lấy chi tiết sản phẩm,
+     * sau đó mới kiểm tra stockQuantity.
+     * @param cartItemId ID của mục trong giỏ hàng.
+     * @param newQuantity Số lượng mới mà người dùng muốn cập nhật.
+     */
     @Override
     public void onUpdateQuantity(int cartItemId, int newQuantity) {
+        // Bước 1: Tìm sản phẩm trong adapter để lấy Product ID
+        CartItemResponse itemToUpdate = cartAdapter.findItemById(cartItemId);
+
+        if (itemToUpdate == null) {
+            Toast.makeText(this, "Lỗi: Không tìm thấy sản phẩm.", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        int productId = itemToUpdate.getProductId();
+
+        // Bước 2: Gọi API để lấy thông tin chi tiết của sản phẩm (bao gồm cả stockQuantity)
         showLoading(true);
+        ApiClient.getProductById(productId).enqueue(new Callback<ApiResponse<ProductResponse>>() {
+            @Override
+            public void onResponse(Call<ApiResponse<ProductResponse>> call, Response<ApiResponse<ProductResponse>> response) {
+                if (response.isSuccessful() && response.body() != null && response.body().isSuccess()) {
+                    ProductResponse productDetails = response.body().getData();
+                    int stockQuantity = productDetails.getStockQuantity();
+
+                    // Bước 3: So sánh số lượng muốn mua với số lượng trong kho
+                    if (newQuantity > stockQuantity) {
+                        // Nếu vượt quá, hiển thị lỗi và không cập nhật
+                        showErrorToast(stockQuantity);
+                        // Hoàn tác lại số lượng trên giao diện
+                        cartAdapter.revertItemQuantity(cartItemId);
+                        showDataView(); // Ẩn loading
+                    } else {
+                        // Nếu hợp lệ, gọi API để cập nhật giỏ hàng
+                        performCartUpdate(cartItemId, newQuantity, stockQuantity);
+                    }
+                } else {
+                    // Xử lý lỗi khi không lấy được thông tin sản phẩm
+                    Toast.makeText(CartActivity.this, "Không thể kiểm tra tồn kho. Vui lòng thử lại.", Toast.LENGTH_SHORT).show();
+                    cartAdapter.revertItemQuantity(cartItemId);
+                    showDataView();
+                }
+            }
+
+            @Override
+            public void onFailure(Call<ApiResponse<ProductResponse>> call, Throwable t) {
+                // Xử lý lỗi kết nối mạng
+                Toast.makeText(CartActivity.this, "Lỗi kết nối khi kiểm tra tồn kho.", Toast.LENGTH_SHORT).show();
+                cartAdapter.revertItemQuantity(cartItemId);
+                showDataView();
+            }
+        });
+    }
+
+    /**
+     * Phương thức mới: Thực hiện việc gọi API để cập nhật giỏ hàng sau khi đã kiểm tra tồn kho.
+     * @param cartItemId ID của mục trong giỏ hàng
+     * @param newQuantity Số lượng mới hợp lệ
+     * @param stockQuantity Số lượng tồn kho (để hiển thị lỗi nếu API cập nhật thất bại)
+     */
+    private void performCartUpdate(int cartItemId, int newQuantity, int stockQuantity) {
         String token = authHelper.getToken();
         if (token == null || token.isEmpty()) {
             Toast.makeText(this, "Phiên đăng nhập hết hạn.", Toast.LENGTH_SHORT).show();
-            showDataView(); // Quay lại trạng thái hiển thị dữ liệu
+            showDataView();
             return;
         }
+
         String authHeader = "Bearer " + token;
         CartItemUpdateRequest request = new CartItemUpdateRequest(newQuantity);
 
@@ -177,17 +243,45 @@ public class CartActivity extends BaseActivity implements CartAdapter.CartAdapte
                 if (response.isSuccessful() && response.body() != null && response.body().isSuccess()) {
                     Toast.makeText(CartActivity.this, "Cập nhật giỏ hàng thành công!", Toast.LENGTH_SHORT).show();
                 } else {
-                    Toast.makeText(CartActivity.this, "Cập nhật thất bại, vui lòng thử lại.", Toast.LENGTH_SHORT).show();
+                    // Nếu API cập nhật thất bại (có thể do người khác vừa mua hết hàng)
+                    showErrorToast(stockQuantity);
                 }
-                fetchCartData(); // Load lại để đồng bộ tổng tiền
+                // Luôn tải lại toàn bộ giỏ hàng để đồng bộ trạng thái mới nhất từ server
+                fetchCartData();
             }
 
             @Override
             public void onFailure(Call<ApiResponse<CartItemUpdateResponse>> call, Throwable t) {
                 Toast.makeText(CartActivity.this, "Lỗi kết nối: " + t.getMessage(), Toast.LENGTH_SHORT).show();
-                fetchCartData();
+                fetchCartData(); // Tải lại để quay về trạng thái cũ
             }
         });
+    }
+
+
+    /**
+     * Phương thức mới: Hiển thị một Toast tùy chỉnh với thông báo lỗi và số lượng tồn kho.
+     * @param stockAvailable Số lượng sản phẩm thực tế còn trong kho.
+     */
+    private void showErrorToast(int stockAvailable) {
+        // Inflate layout tùy chỉnh từ file activity_error_cart.xml
+        LayoutInflater inflater = getLayoutInflater();
+        View layout = inflater.inflate(R.layout.activity_error_cart, null);
+
+        // Tìm các TextView trong layout đã inflate
+        TextView textErrorMessage = layout.findViewById(R.id.textViewErrorMessage);
+        TextView textStockInfo = layout.findViewById(R.id.textViewStockInfo);
+
+        // Thiết lập nội dung cho các TextView
+        textErrorMessage.setText("Số lượng vượt quá giới hạn!");
+        textStockInfo.setText("Chỉ còn " + stockAvailable + " sản phẩm trong kho.");
+
+        // Tạo và hiển thị Toast
+        Toast toast = new Toast(getApplicationContext());
+        toast.setGravity(Gravity.CENTER_VERTICAL | Gravity.CENTER_HORIZONTAL, 0, 0); // Hiển thị ở giữa màn hình
+        toast.setDuration(Toast.LENGTH_LONG);
+        toast.setView(layout);
+        toast.show();
     }
 
     @Override

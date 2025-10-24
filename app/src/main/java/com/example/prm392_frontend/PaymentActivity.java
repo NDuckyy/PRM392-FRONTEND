@@ -2,7 +2,9 @@ package com.example.prm392_frontend;
 
 import android.content.Intent;
 import android.graphics.Bitmap;
+import android.net.Uri;
 import android.os.Bundle;
+import android.util.Log; // Thêm import Log
 import android.view.View;
 import android.webkit.WebResourceRequest;
 import android.webkit.WebView;
@@ -25,11 +27,13 @@ import retrofit2.Response;
 
 public class PaymentActivity extends AppCompatActivity {
 
+    private static final String TAG = "PaymentActivity"; // Thêm TAG để log
     private MaterialToolbar topAppBar;
     private WebView webViewPayment;
     private ProgressBar progressBar;
-
     private AuthHelper authHelper;
+    private int currentOrderId; // Biến để lưu orderId hiện tại
+
     public static final String EXTRA_ORDER_ID = "ORDER_ID";
 
     @Override
@@ -42,29 +46,17 @@ public class PaymentActivity extends AppCompatActivity {
         setupClickListeners();
         setupOnBackPressed();
 
-        // ====================================================================
-        // SỬA 1: Khởi tạo authHelper để có thể lấy token
-        // ====================================================================
         authHelper = new AuthHelper(this);
+        // Lấy và lưu orderId vào biến của class
+        currentOrderId = getIntent().getIntExtra(EXTRA_ORDER_ID, -1);
 
-        // ====================================================================
-        // SỬA 2: Lấy orderId được truyền từ CartActivity, không gán cứng
-        // ====================================================================
-        int orderId = getIntent().getIntExtra(EXTRA_ORDER_ID, -1);
-
-        // Kiểm tra xem có nhận được orderId hợp lệ không
-        if (orderId == -1) {
+        if (currentOrderId == -1) {
             Toast.makeText(this, "Lỗi: Không có ID đơn hàng để thanh toán.", Toast.LENGTH_LONG).show();
             finish();
             return;
         }
 
-        // Bắt đầu quá trình lấy URL và tải nó
         String token = authHelper.getToken();
-
-        // ====================================================================
-        // SỬA 3: Kiểm tra token trước khi gọi API
-        // ====================================================================
         if (token == null || token.isEmpty()) {
             Toast.makeText(this, "Lỗi: Người dùng chưa đăng nhập hoặc phiên đã hết hạn.", Toast.LENGTH_LONG).show();
             finish();
@@ -72,8 +64,10 @@ public class PaymentActivity extends AppCompatActivity {
         }
 
         String authHeader = "Bearer " + token;
-        fetchPaymentUrlAndLoad(authHeader, orderId);
+        fetchPaymentUrlAndLoad(authHeader, currentOrderId);
     }
+
+    //... (Các phương thức initViews, setupClickListeners, setupOnBackPressed không đổi)
 
     private void initViews() {
         topAppBar = findViewById(R.id.topAppBar);
@@ -81,11 +75,28 @@ public class PaymentActivity extends AppCompatActivity {
         progressBar = findViewById(R.id.progressBar);
     }
 
+    private void setupClickListeners() {
+        topAppBar.setNavigationOnClickListener(v -> getOnBackPressedDispatcher().onBackPressed());
+    }
+
+    private void setupOnBackPressed() {
+        getOnBackPressedDispatcher().addCallback(this, new OnBackPressedCallback(true) {
+            @Override
+            public void handleOnBackPressed() {
+                if (webViewPayment.canGoBack()) {
+                    webViewPayment.goBack();
+                } else {
+                    setEnabled(false);
+                    getOnBackPressedDispatcher().onBackPressed();
+                }
+            }
+        });
+    }
+
     private void setupWebView() {
-        // Bật JavaScript, rất quan trọng cho các trang thanh toán
         webViewPayment.getSettings().setJavaScriptEnabled(true);
-        // Bật DOM Storage để lưu trữ dữ liệu tạm thời (một số trang yêu cầu)
         webViewPayment.getSettings().setDomStorageEnabled(true);
+        webViewPayment.getSettings().setJavaScriptCanOpenWindowsAutomatically(true);
 
         webViewPayment.setWebViewClient(new WebViewClient() {
             @Override
@@ -102,55 +113,112 @@ public class PaymentActivity extends AppCompatActivity {
                 webViewPayment.setVisibility(View.VISIBLE);
             }
 
-            // Hàm này cực kỳ quan trọng để bắt Deep Link khi thanh toán xong
             @Override
             public boolean shouldOverrideUrlLoading(WebView view, WebResourceRequest request) {
-                String url = request.getUrl().toString();
+                Uri uri = request.getUrl();
+                String url = uri.toString();
 
-                if (url.startsWith("prm392://")) {
-                    // Khi thanh toán xong, VNPay sẽ gọi về URL này.
-                    // Chuyển sang một Activity khác để hiển thị kết quả.
-                    Intent intent = new Intent(PaymentActivity.this, PaymentSuccessActivity.class);
-                    intent.setData(request.getUrl());
+                if (url.startsWith("prm392://payment/result")) {
+                    String responseCode = uri.getQueryParameter("vnp_ResponseCode");
 
-                    // Thêm cờ này để xóa các Activity trung gian (như CartActivity)
-                    intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_NEW_TASK);
+                    if ("00".equals(responseCode)) {
+                        // Giao dịch thành công, gọi API cập nhật trạng thái đơn hàng
+                        Toast.makeText(PaymentActivity.this, "Thanh toán thành công! Đang cập nhật đơn hàng...", Toast.LENGTH_SHORT).show();
+                        updateOrderStatusOnServer(uri);
+                    } else {
+                        // Giao dịch thất bại
+                        String message = getVnpayErrorMessage(responseCode);
+                        Toast.makeText(PaymentActivity.this, "Giao dịch thất bại: " + message, Toast.LENGTH_LONG).show();
+                        finish(); // Đóng Activity và quay về giỏ hàng
+                    }
 
-                    startActivity(intent);
-
-                    // Đóng Activity hiện tại sau khi đã chuyển hướng
-                    finish();
-
-                    return true; // Đã xử lý URL
+                    return true;
                 }
-                return false; // URL bình thường, để WebView tự xử lý
-            }
 
+                return false;
+            }
         });
     }
 
-    private void setupClickListeners() {
-        topAppBar.setNavigationOnClickListener(v -> finish());
+    /**
+     * Phương thức mới: Gọi API để cập nhật trạng thái thanh toán của đơn hàng trên server.
+     * @param returnUri Uri trả về từ VNPAY, chứa các thông tin giao dịch.
+     */
+    private void updateOrderStatusOnServer(Uri returnUri) {
+        String token = authHelper.getToken();
+        if (token == null) {
+            Toast.makeText(this, "Lỗi: Phiên đăng nhập hết hạn. Không thể cập nhật đơn hàng.", Toast.LENGTH_LONG).show();
+            // Dù lỗi, vẫn nên chuyển sang trang thành công để người dùng biết họ đã trả tiền.
+            // Backend sẽ phải có cơ chế xử lý khác (ví dụ: IPN của VNPAY).
+            navigateToSuccessScreen(returnUri);
+            return;
+        }
+
+        String authHeader = "Bearer " + token;
+
+        // Gọi API từ ApiClient
+        ApiClient.updateOrderPaymentStatus(authHeader, currentOrderId).enqueue(new Callback<ApiResponse<Object>>() {
+            @Override
+            public void onResponse(Call<ApiResponse<Object>> call, Response<ApiResponse<Object>> response) {
+                if (response.isSuccessful() && response.body() != null && response.body().isSuccess()) {
+                    Log.d(TAG, "Cập nhật trạng thái đơn hàng thành công trên server.");
+                } else {
+                    // Log lỗi nếu không cập nhật được, nhưng không chặn người dùng.
+                    Log.e(TAG, "Lỗi khi cập nhật trạng thái đơn hàng. Mã lỗi: " + response.code());
+                    Toast.makeText(PaymentActivity.this, "Lưu ý: Có lỗi khi cập nhật trạng thái đơn hàng.", Toast.LENGTH_SHORT).show();
+                }
+                // Dù thành công hay thất bại, vẫn chuyển người dùng đến màn hình thành công.
+                navigateToSuccessScreen(returnUri);
+            }
+
+            @Override
+            public void onFailure(Call<ApiResponse<Object>> call, Throwable t) {
+                // Log lỗi kết nối, nhưng không chặn người dùng.
+                Log.e(TAG, "Lỗi kết nối khi cập nhật trạng thái đơn hàng.", t);
+                Toast.makeText(PaymentActivity.this, "Lưu ý: Có lỗi kết nối khi cập nhật đơn hàng.", Toast.LENGTH_SHORT).show();
+                // Dù thành công hay thất bại, vẫn chuyển người dùng đến màn hình thành công.
+                navigateToSuccessScreen(returnUri);
+            }
+        });
     }
 
     /**
-     * Gọi API để lấy URL thanh toán từ backend và sau đó tải nó lên WebView.
-     * @param authen  Chuỗi token xác thực (ví dụ: "Bearer ...")
-     * @param orderId ID của đơn hàng cần thanh toán.
+     * Phương thức mới: Chuyển hướng đến màn hình PaymentSuccessActivity.
+     * @param data Uri để truyền sang cho màn hình thành công.
      */
+    private void navigateToSuccessScreen(Uri data) {
+        Intent intent = new Intent(PaymentActivity.this, PaymentSuccessActivity.class);
+        intent.setData(data); // Truyền dữ liệu sang để hiển thị chi tiết nếu cần
+        intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_NEW_TASK);
+        startActivity(intent);
+        finish(); // Đóng PaymentActivity
+    }
+
+    private String getVnpayErrorMessage(String responseCode) {
+        switch (responseCode != null ? responseCode : "") {
+            case "07": return "Trừ tiền thành công nhưng giao dịch bị nghi ngờ gian lận.";
+            case "09": return "Thẻ/Tài khoản chưa đăng ký dịch vụ Internet Banking.";
+            case "10": return "Xác thực không thành công.";
+            case "11": return "Giao dịch đã hết hạn.";
+            case "12": return "Thẻ/Tài khoản bị khóa.";
+            case "13": return "Nhập sai OTP.";
+            case "24": return "Hủy giao dịch.";
+            case "51": return "Tài khoản không đủ số dư.";
+            case "65": return "Tài khoản đã vượt quá hạn mức giao dịch trong ngày.";
+            default: return "Giao dịch không thành công. Mã lỗi: " + responseCode;
+        }
+    }
+
     private void fetchPaymentUrlAndLoad(String authen, int orderId) {
         progressBar.setVisibility(View.VISIBLE);
         webViewPayment.setVisibility(View.GONE);
 
         PaymentApi paymentApi = ApiClient.getPaymentUrl();
-
         paymentApi.getPaymentUrl(authen, orderId).enqueue(new Callback<ApiResponse<String>>() {
             @Override
             public void onResponse(Call<ApiResponse<String>> call, Response<ApiResponse<String>> response) {
                 if (response.isSuccessful() && response.body() != null && response.body().isSuccess() && response.body().getData() != null) {
-                    // Lấy URL từ trong đối tượng "data"
                     String paymentUrl = response.body().getData();
-                    // Ra lệnh cho WebView tải nội dung từ URL đã nhận được
                     webViewPayment.loadUrl(paymentUrl);
                 } else {
                     progressBar.setVisibility(View.GONE);
@@ -159,7 +227,6 @@ public class PaymentActivity extends AppCompatActivity {
                         errorMessage = response.body().getMessage();
                     }
                     Toast.makeText(PaymentActivity.this, errorMessage, Toast.LENGTH_LONG).show();
-                    // Đóng activity sau một khoảng thời gian ngắn để người dùng đọc thông báo
                     new android.os.Handler().postDelayed(PaymentActivity.this::finish, 2000);
                 }
             }
@@ -169,23 +236,6 @@ public class PaymentActivity extends AppCompatActivity {
                 progressBar.setVisibility(View.GONE);
                 Toast.makeText(PaymentActivity.this, "Lỗi kết nối mạng: " + t.getMessage(), Toast.LENGTH_LONG).show();
                 new android.os.Handler().postDelayed(PaymentActivity.this::finish, 2000);
-            }
-        });
-    }
-
-    private void setupOnBackPressed() {
-        getOnBackPressedDispatcher().addCallback(this, new OnBackPressedCallback(true) {
-            @Override
-            public void handleOnBackPressed() {
-                // Nếu WebView có thể quay lại trang trước đó (trong lịch sử của WebView)
-                if (webViewPayment.canGoBack()) {
-                    webViewPayment.goBack();
-                } else {
-                    // Nếu không, thực hiện hành vi quay lại mặc định (đóng Activity)
-                    // Tắt callback này để tránh vòng lặp vô hạn và gọi lại onBackPressed
-                    setEnabled(false);
-                    getOnBackPressedDispatcher().onBackPressed();
-                }
             }
         });
     }

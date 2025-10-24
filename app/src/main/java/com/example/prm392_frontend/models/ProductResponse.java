@@ -30,6 +30,9 @@ public class ProductResponse {
     @SerializedName("provider")
     private Provider provider;
 
+    @SerializedName("stockQuantity")
+    private Integer stockQuantity;
+
     // Getters
     public int getId() {
         return id;
@@ -103,4 +106,13 @@ public class ProductResponse {
     public void setProvider(Provider provider) {
         this.provider = provider;
     }
+
+    public Integer getStockQuantity() {
+        return stockQuantity;
+    }
+
+    public void setStockQuantity(Integer stockQuantity) {
+        this.stockQuantity = stockQuantity;
+    }
+
 }
