@@ -313,36 +313,36 @@ public class ProductDetailsActivity extends AppCompatActivity {
         ApiClient.addProductToCart(token, request).enqueue(new Callback<ApiResponse<Object>>() {
             @Override
             public void onResponse(Call<ApiResponse<Object>> call, Response<ApiResponse<Object>> response) {
-                // Kích hoạt lại nút
+                // Re-enable button
                 addToCartButton.setEnabled(true);
                 addToCartButton.setText(originalButtonText);
 
                 if (response.isSuccessful() && response.body() != null) {
-                    // Thêm vào giỏ hàng thành công
+                    // Show success message
                     Toast.makeText(ProductDetailsActivity.this, "Added to cart successfully!", Toast.LENGTH_SHORT).show();
 
                     // Animate button on success
                     animateButtonSuccess();
                 } else {
-                    // Xử lý lỗi từ server (ví dụ: một người khác vừa mua hết hàng ngay lúc đó)
+                    // Handle API error (e.g., product out of stock, invalid request)
                     String errorMessage = "Failed to add to cart. Please try again.";
                     if (response.body() != null && response.body().getMessage() != null) {
                         errorMessage = response.body().getMessage();
                     }
                     Toast.makeText(ProductDetailsActivity.this, errorMessage, Toast.LENGTH_LONG).show();
-                    Log.e("AddToCart", "API Error: " + response.code() + " " + response.message());
+                    Log.e(TAG, "API Error: " + response.code() + " " + response.message());
                 }
             }
 
             @Override
             public void onFailure(Call<ApiResponse<Object>> call, Throwable t) {
-                // Kích hoạt lại nút
+                // Re-enable button
                 addToCartButton.setEnabled(true);
                 addToCartButton.setText(originalButtonText);
 
-                // Xử lý lỗi mạng
+                // Handle network failure
                 Toast.makeText(ProductDetailsActivity.this, "Network error. Please check your connection.", Toast.LENGTH_LONG).show();
-                Log.e("AddToCart", "Network Failure: ", t);
+                Log.e(TAG, "Network Failure: ", t);
             }
         });
     }
@@ -477,16 +477,16 @@ public class ProductDetailsActivity extends AppCompatActivity {
     private void fetchLocationAndOpenMyMap() {
         btnDirection.setEnabled(false);
 
-        int providerIdInt;
+        String providerName;
         try {
-            providerIdInt = product.getProviderId();
+            providerName = product.getProviderId();
         } catch (Exception e) {
             Toast.makeText(this, "Provider ID không hợp lệ", Toast.LENGTH_SHORT).show();
             btnDirection.setEnabled(true);
             return;
         }
 
-        ApiClient.getLocationById(providerIdInt).enqueue(new retrofit2.Callback<com.example.prm392_frontend.models.LocationResponse>() {
+        ApiClient.getLocationByName(providerName).enqueue(new retrofit2.Callback<com.example.prm392_frontend.models.LocationResponse>() {
             @Override
             public void onResponse(retrofit2.Call<com.example.prm392_frontend.models.LocationResponse> call,
                                    retrofit2.Response<com.example.prm392_frontend.models.LocationResponse> response) {
