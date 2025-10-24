@@ -101,6 +101,15 @@ public class MapsActivity extends AppCompatActivity {
         Button btnDirections = findViewById(R.id.btnDirections);
         btnDirections.setOnClickListener(v -> requestCurrentLocation(true));
 
+        // ✅ Nút Back mới (chỉ thêm phần này, không đổi logic khác)
+        Button btnBack = findViewById(R.id.btnBack);
+        btnBack.setOnClickListener(v -> {
+            // Quay lại màn trước
+            finish();
+            // Hoặc dùng API mới:
+            // getOnBackPressedDispatcher().onBackPressed();
+        });
+
         requestPermissionsIfNecessary(new String[]{
                 Manifest.permission.ACCESS_FINE_LOCATION,
                 Manifest.permission.ACCESS_COARSE_LOCATION
