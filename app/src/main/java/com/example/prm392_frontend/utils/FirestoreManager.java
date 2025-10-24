@@ -120,8 +120,8 @@ public class FirestoreManager {
             return false;
         }
 
-        String[] parts = conversationId.split("-");
-        if (parts.length >= 2) {
+        String[] parts = conversationId.split("-", 2);
+        if (parts.length == 2) {
             // Check if currentUserId matches either part
             return parts[0].equals(currentUserId) || parts[1].equals(currentUserId);
         }

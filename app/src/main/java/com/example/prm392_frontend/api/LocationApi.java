@@ -6,6 +6,6 @@ import retrofit2.Call;
 import retrofit2.http.GET;
 import retrofit2.http.Path;
 public interface LocationApi {
-    @GET("api/location/{id}")
-    Call<LocationResponse> getLocation(@Path("id") int id);
+    @GET("api/location/{providerName}")
+    Call<LocationResponse> getLocation(@Path("providerName") String name);
 }

@@ -27,7 +27,7 @@ public class Product implements Parcelable {
     private String fullDescription;
     private String technicalSpecifications;
     private CategoryResponse categoryID;
-    private int providerId;
+    private String providerId;
     private String providerName;
 
     public Product(int id, String name, String description, double price, String imageUrl,
@@ -58,7 +58,7 @@ public class Product implements Parcelable {
         brand = in.readString();
         popularity = in.readInt();
         specifications = in.readString();
-        providerId = in.readInt();
+        providerId = in.readString();
         providerName = in.readString();
     }
 
@@ -170,11 +170,11 @@ public class Product implements Parcelable {
         }
     }
 
-    public int getProviderId() {
+    public String getProviderId() {
         return providerId;
     }
 
-    public void setProviderId(int providerId) {
+    public void setProviderId(String providerId) {
         this.providerId = providerId;
     }
 
@@ -204,7 +204,7 @@ public class Product implements Parcelable {
         dest.writeString(brand);
         dest.writeInt(popularity);
         dest.writeString(specifications);
-        dest.writeInt(providerId);
+        dest.writeString(providerId);
         dest.writeString(providerName);
     }
 }

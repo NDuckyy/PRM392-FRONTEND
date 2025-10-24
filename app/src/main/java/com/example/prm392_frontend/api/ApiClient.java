@@ -101,8 +101,8 @@ public class ApiClient {
         return getClient().create(LocationApi.class);
     }
 
-    public static Call<LocationResponse> getLocationById(int id) {
-        return getLocationApi().getLocation(id);
+    public static Call<LocationResponse> getLocationByName(String name) {
+        return getLocationApi().getLocation(name);
     }
 
 

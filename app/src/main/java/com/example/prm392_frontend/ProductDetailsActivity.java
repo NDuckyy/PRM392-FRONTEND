@@ -23,6 +23,7 @@ import com.bumptech.glide.load.engine.DiskCacheStrategy;
 import com.example.prm392_frontend.api.ApiClient; // Thêm import
 import com.example.prm392_frontend.models.ApiResponse; // Thêm import
 import com.example.prm392_frontend.models.CartAddRequest; // Thêm import
+import com.example.prm392_frontend.models.LocationResponse;
 import com.example.prm392_frontend.utils.AuthHelper;
 import com.google.android.material.appbar.CollapsingToolbarLayout;
 import com.google.android.material.appbar.MaterialToolbar;
@@ -399,19 +400,18 @@ public class ProductDetailsActivity extends AppCompatActivity {
 
     private void fetchLocationAndOpenMyMap() {
         btnDirection.setEnabled(false);
-
-        int providerIdInt;
+        String providerName;
         try {
-            providerIdInt = product.getProviderId();
+            providerName = product.getProviderId();
         } catch (Exception e) {
             Toast.makeText(this, "Provider ID không hợp lệ", Toast.LENGTH_SHORT).show();
             btnDirection.setEnabled(true);
             return;
         }
 
-        ApiClient.getLocationById(providerIdInt).enqueue(new retrofit2.Callback<com.example.prm392_frontend.models.LocationResponse>() {
+        ApiClient.getLocationByName(providerName).enqueue(new retrofit2.Callback<LocationResponse>() {
             @Override
-            public void onResponse(retrofit2.Call<com.example.prm392_frontend.models.LocationResponse> call,
+            public void onResponse(retrofit2.Call<LocationResponse> call,
                                    retrofit2.Response<com.example.prm392_frontend.models.LocationResponse> response) {
                 btnDirection.setEnabled(true);
                 if (!response.isSuccessful() || response.body() == null) {
@@ -419,7 +419,7 @@ public class ProductDetailsActivity extends AppCompatActivity {
                     return;
                 }
 
-                com.example.prm392_frontend.models.LocationResponse body = response.body();
+                LocationResponse body = response.body();
                 double lat = body.latitude;
                 double lng = body.longitude;
                 String label = (body.provider != null && body.provider.providerName != null)
