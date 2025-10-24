@@ -76,7 +76,7 @@ public class ProductDetailsActivity extends AppCompatActivity {
             return;
         }
         btnDirection = findViewById(R.id.btn_direction);
-        btnDirection.setOnClickListener(v -> fetchLocationAndOpenMaps());
+        btnDirection.setOnClickListener(v -> fetchLocationAndOpenMyMap());
 
         // Initialize views
         MaterialToolbar toolbar = findViewById(R.id.toolbar);
@@ -397,12 +397,12 @@ public class ProductDetailsActivity extends AppCompatActivity {
         }
     }
 
-    private void fetchLocationAndOpenMaps() {
+    private void fetchLocationAndOpenMyMap() {
         btnDirection.setEnabled(false);
 
         int providerIdInt;
         try {
-            providerIdInt = product.getProviderId(); // hoặc product.getProviderLocationId()
+            providerIdInt = product.getProviderId();
         } catch (Exception e) {
             Toast.makeText(this, "Provider ID không hợp lệ", Toast.LENGTH_SHORT).show();
             btnDirection.setEnabled(true);
@@ -426,33 +426,22 @@ public class ProductDetailsActivity extends AppCompatActivity {
                         ? body.provider.providerName
                         : (product.getProviderName() != null ? product.getProviderName() : "Cửa hàng");
 
-                android.net.Uri gmmIntentUri = android.net.Uri.parse(
-                        "geo:0,0?q=" + lat + "," + lng + "(" + android.net.Uri.encode(label) + ")");
-
-                Intent mapIntent = new Intent(Intent.ACTION_VIEW, gmmIntentUri);
-                mapIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                mapIntent.setPackage("com.google.android.apps.maps"); // ưu tiên Google Maps
-
-                try {
-                    startActivity(mapIntent);
-                } catch (Exception e) {
-                    // fallback cho bất kỳ app bản đồ nào
-                    mapIntent.setPackage(null);
-                    try {
-                        startActivity(mapIntent);
-                    } catch (Exception ex) {
-                        Toast.makeText(ProductDetailsActivity.this, "Không tìm thấy ứng dụng bản đồ", Toast.LENGTH_LONG).show();
-                    }
-                }
+                // ✅ Mở MapsActivity thay vì Google Maps
+                Intent intent = new Intent(ProductDetailsActivity.this, MapsActivity.class);
+                intent.putExtra("store_lat", lat);
+                intent.putExtra("store_lng", lng);
+                intent.putExtra("store_address", label);
+                startActivity(intent);
             }
 
             @Override
             public void onFailure(retrofit2.Call<com.example.prm392_frontend.models.LocationResponse> call, Throwable t) {
                 btnDirection.setEnabled(true);
                 Toast.makeText(ProductDetailsActivity.this, "Lỗi mạng. Vui lòng thử lại.", Toast.LENGTH_LONG).show();
-                Log.e(TAG, "fetchLocationAndOpenMaps failure", t);
+                Log.e(TAG, "fetchLocationAndOpenMyMap failure", t);
             }
         });
     }
+
 
 }

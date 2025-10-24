@@ -99,6 +99,10 @@
             android:name=".CartActivity"
             android:exported="false" />
 
+        <activity android:name=".MapsActivity"
+            android:exported="false" />
+
+
 
     </application>
 </manifest>
