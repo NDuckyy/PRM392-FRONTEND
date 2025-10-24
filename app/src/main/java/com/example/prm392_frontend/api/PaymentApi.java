@@ -5,9 +5,13 @@ import com.example.prm392_frontend.models.ApiResponse;
 import retrofit2.Call;
 import retrofit2.http.Header;
 import retrofit2.http.POST;
+import retrofit2.http.PUT;
 import retrofit2.http.Path;
 
 public interface PaymentApi {
+
+    @PUT("/api/payment/{orderId}")
+    Call<ApiResponse<Object>> updateOrderPaymentStatus(@Header("Authorization") String authToken, @Path("orderId") Integer orderId);
 
     @POST("/api/payment/url/{orderId}")
     Call<ApiResponse<String>> getPaymentUrl(@Header("Authorization") String authToken, @Path("orderId") Integer orderId);

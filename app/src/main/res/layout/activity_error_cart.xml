@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <com.google.android.material.card.MaterialCardView
-    xmlns:android="http://schemas.android.com/apk/res/android" xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="wrap_content"
     android:layout_height="wrap_content"
@@ -12,17 +13,44 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:orientation="horizontal"
-        android:padding="12dp"
-        android:gravity="center"> <!-- SỬA Ở ĐÂY -->
+        android:padding="16dp"
+        android:gravity="center_vertical">
 
-        <!-- Nội dung thông báo lỗi -->
-        <TextView
-            android:id="@+id/textViewErrorMessage"
+        <!-- Icon cảnh báo -->
+        <ImageView
+            android:layout_width="24dp"
+            android:layout_height="24dp"
+            android:src="@drawable/ic_failure"
+            app:tint="@android:color/white"
+            android:layout_marginEnd="12dp"
+            android:contentDescription="Lỗi"/>
+
+        <!-- Nhóm chứa 2 dòng text -->
+        <LinearLayout
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:textColor="@android:color/white"
-            android:textSize="16sp"
-            tools:text="Số lượng hàng vượt mức kho chứa!" />
+            android:orientation="vertical">
+
+            <!-- Dòng 1: Thông báo lỗi chính -->
+            <TextView
+                android:id="@+id/textViewErrorMessage"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textColor="@android:color/white"
+                android:textSize="16sp"
+                android:textStyle="bold"
+                tools:text="Số lượng vượt quá giới hạn!" />
+
+            <!-- Dòng 2: Thông tin số lượng còn lại -->
+            <TextView
+                android:id="@+id/textViewStockInfo"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textColor="@android:color/white"
+                android:textSize="14sp"
+                android:layout_marginTop="2dp"
+                tools:text="Chỉ còn 5 sản phẩm trong kho." />
+        </LinearLayout>
 
     </LinearLayout>
 </com.google.android.material.card.MaterialCardView>

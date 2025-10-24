@@ -9,6 +9,7 @@ import com.example.prm392_frontend.models.CartItemUpdateResponse;
 import com.example.prm392_frontend.models.LocationResponse;
 import com.example.prm392_frontend.models.OrderRequest;
 import com.example.prm392_frontend.models.OrderResponse;
+import com.example.prm392_frontend.models.ProductResponse;
 import com.example.prm392_frontend.utils.AuthHelper;
 import com.example.prm392_frontend.utils.AuthInterceptor;
 
@@ -54,6 +55,10 @@ public class ApiClient {
         return getClient().create(ProductApi.class);
     }
 
+    public static Call<ApiResponse<ProductResponse>> getProductById(int productId) {
+        return getProductApi().getProductById(productId);
+    }
+
     public static CartApi getCartApi() {
         return getClient().create(CartApi.class);
     }
@@ -87,6 +92,10 @@ public class ApiClient {
 
     public static Call<ApiResponse<String>> getPaymentUrl(String token,int orderId) {
         return getPaymentUrl().getPaymentUrl(token,orderId);
+    }
+
+    public static Call<ApiResponse<Object>> updateOrderPaymentStatus(String token, int orderId) {
+        return getPaymentUrl().updateOrderPaymentStatus(token, orderId);
     }
 
     public static OrderApi getOrderApi() {
