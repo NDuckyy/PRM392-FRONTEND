@@ -92,8 +92,10 @@ public class FirestoreManager {
                         List<ConversationSummary> conversations = new ArrayList<>();
                         for (DocumentSnapshot doc : snapshots.getDocuments()) {
                             String conversationId = doc.getId();
-                            // Only include conversations where conversationId contains current userId
-                            if (conversationId != null && conversationId.contains(currentUserId)) {
+
+                            // Parse conversationId (format: userId-providerId)
+                            // Check if current user is one of the participants
+                            if (conversationId != null && isUserInConversation(conversationId, currentUserId)) {
                                 ConversationSummary conv = documentToConversation(doc);
                                 if (conv != null) {
                                     conversations.add(conv);
@@ -107,6 +109,24 @@ public class FirestoreManager {
                         listener.onConversationsUpdated(new ArrayList<>());
                     }
                 });
+    }
+
+    /**
+     * Check if the current user is a participant in the conversation
+     * ConversationId format: userId-providerId
+     */
+    private boolean isUserInConversation(String conversationId, String currentUserId) {
+        if (conversationId == null || currentUserId == null) {
+            return false;
+        }
+
+        String[] parts = conversationId.split("-");
+        if (parts.length >= 2) {
+            // Check if currentUserId matches either part
+            return parts[0].equals(currentUserId) || parts[1].equals(currentUserId);
+        }
+
+        return false;
     }
 
     /**
