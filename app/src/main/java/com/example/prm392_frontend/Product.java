@@ -20,6 +20,7 @@ public class Product implements Parcelable {
     private String brand;
     private int popularity;
     private String specifications;
+    private int stockQuantity; // 1. Thêm trường mới
 
     // Additional fields for backend compatibility
     private String productName;
@@ -44,6 +45,8 @@ public class Product implements Parcelable {
         this.brand = brand;
         this.popularity = popularity;
         this.specifications = specifications;
+        // Gán giá trị mặc định khi khởi tạo, ví dụ là 0
+        this.stockQuantity = 0;
     }
 
     protected Product(Parcel in) {
@@ -60,6 +63,7 @@ public class Product implements Parcelable {
         specifications = in.readString();
         providerId = in.readString();
         providerName = in.readString();
+        stockQuantity = in.readInt(); // 2. Đọc giá trị từ Parcel
     }
 
     public static final Creator<Product> CREATOR = new Creator<Product>() {
@@ -73,6 +77,15 @@ public class Product implements Parcelable {
             return new Product[size];
         }
     };
+
+    // 4. Thêm Getter và Setter cho trường mới
+    public int getStockQuantity() {
+        return stockQuantity;
+    }
+
+    public void setStockQuantity(int stockQuantity) {
+        this.stockQuantity = stockQuantity;
+    }
 
     public int getId() {
         return id;
@@ -206,5 +219,6 @@ public class Product implements Parcelable {
         dest.writeString(specifications);
         dest.writeString(providerId);
         dest.writeString(providerName);
+        dest.writeInt(stockQuantity); // 3. Ghi giá trị vào Parcel
     }
 }

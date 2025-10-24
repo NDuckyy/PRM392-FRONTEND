@@ -150,4 +150,33 @@ public class CartAdapter extends RecyclerView.Adapter<CartAdapter.CartViewHolder
             buttonDecrease.setEnabled(currentQuantity > 1);
         }
     }
+
+
+    /**
+     * Phương thức mới: Tìm một item trong danh sách dựa vào ID của nó.
+     * @param cartItemId ID của mục giỏ hàng cần tìm.
+     * @return CartItemResponse nếu tìm thấy, ngược lại trả về null.
+     */
+    public CartItemResponse findItemById(int cartItemId) {
+        for (CartItemResponse item : cartItems) {
+            if (item.getId() == cartItemId) {
+                return item;
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Phương thức mới: Cập nhật lại giao diện để hiển thị số lượng cũ của một item.
+     * @param cartItemId ID của item cần hoàn tác.
+     */
+    public void revertItemQuantity(int cartItemId) {
+        for (int i = 0; i < cartItems.size(); i++) {
+            if (cartItems.get(i).getId() == cartItemId) {
+                notifyItemChanged(i); // Ra lệnh cho RecyclerView vẽ lại item ở vị trí 'i'
+                return;
+            }
+        }
+    }
+
 }
