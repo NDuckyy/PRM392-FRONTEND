@@ -105,4 +105,8 @@ public class ApiClient {
         return getOrderApi().create(authToken, orderRequest);
     }
 
+    public static UserApi getUserApi() {
+        return getClient().create(UserApi.class);
+    }
+
 }

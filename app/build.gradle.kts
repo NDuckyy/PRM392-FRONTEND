@@ -41,6 +41,7 @@ android {
 }
 
 dependencies {
+    implementation("io.github.chaosleung:pinview:1.4.4")
     implementation(libs.appcompat)
     implementation(libs.material)
     implementation(libs.activity)

@@ -1,5 +1,6 @@
 package com.example.prm392_frontend;
 
+import android.graphics.Color;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -45,7 +46,26 @@ public class ProductAdapter extends RecyclerView.Adapter<ProductAdapter.ProductV
 
         // Animate items
         setAnimation(holder.itemView, position);
+
+        if (product.hasBanner()) {
+            holder.productBanner.setVisibility(View.VISIBLE);
+
+            int yellowBackgroundColor = Color.parseColor("#FFD100");
+            int tolerance = 30;
+
+            Glide.with(holder.itemView.getContext())
+                    .load(product.getBannerResourceId())
+                    .into(holder.productBanner);
+
+        } else {
+            holder.productBanner.setVisibility(View.GONE);
+        }
+
+
+        holder.itemView.setOnClickListener(v -> listener.onProductClick(product));
     }
+
+
 
     private void setAnimation(View viewToAnimate, int position) {
         if (position > lastPosition) {
@@ -65,22 +85,23 @@ public class ProductAdapter extends RecyclerView.Adapter<ProductAdapter.ProductV
         private TextView productName;
         private TextView productPrice;
 
+        private ImageView productBanner;
+
         public ProductViewHolder(@NonNull View itemView) {
             super(itemView);
             productImage = itemView.findViewById(R.id.product_image);
             productName = itemView.findViewById(R.id.product_name);
             productPrice = itemView.findViewById(R.id.product_price);
+            productBanner = itemView.findViewById(R.id.product_banner);
         }
 
         public void bind(Product product, OnProductClickListener listener) {
             productName.setText(product.getName());
 
-            // Format currency with thousand separators
             NumberFormat currencyFormat = NumberFormat.getInstance(new Locale("vi", "VN"));
             String formattedPrice = "₫" + currencyFormat.format(product.getPrice());
             productPrice.setText(formattedPrice);
 
-            // Load image from URL using Glide
             Glide.with(productImage.getContext())
                     .load(product.getImageUrl())
                     .placeholder(R.drawable.product_image_placeholder)

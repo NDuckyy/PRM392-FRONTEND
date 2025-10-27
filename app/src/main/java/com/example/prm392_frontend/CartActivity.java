@@ -5,9 +5,7 @@ import android.os.Bundle;
 import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
-import android.view.ViewGroup;
 import android.widget.Button;
-import android.widget.CheckBox;
 import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.RadioButton;
@@ -15,7 +13,6 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.appcompat.app.AlertDialog;
-import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -28,9 +25,8 @@ import com.example.prm392_frontend.models.CartResponse;
 import com.example.prm392_frontend.models.OrderRequest;
 import com.example.prm392_frontend.models.OrderResponse;
 import com.example.prm392_frontend.models.ProductResponse;
+import com.example.prm392_frontend.models.User;
 import com.example.prm392_frontend.utils.AuthHelper;
-// Sửa lại import, không cần import CartAdapter 2 lần
-// import com.example.prm392_frontend.CartAdapter;
 import com.google.android.material.appbar.MaterialToolbar;
 import com.google.android.material.card.MaterialCardView;
 
@@ -43,19 +39,15 @@ import retrofit2.Response;
 
 public class CartActivity extends BaseActivity implements CartAdapter.CartAdapterListener {
 
-    // REFACTOR: Chuyển token ra làm biến toàn cục để dễ dàng thay đổi
-
     private MaterialToolbar topAppBar;
     private RecyclerView recyclerViewCartItems;
     private LinearLayout emptyCartView;
     private TextView textViewTotalPrice;
     private EditText editTextAddress;
-    private CheckBox checkboxUseSavedAddress;
     private RadioButton radioButtonOnline;
     private RadioButton radioButtonCOD;
     private Button buttonPlaceOrder;
     private MaterialCardView bottomBar;
-    private MaterialCardView deliveryInfoCard;
 
     private CartAdapter cartAdapter;
     private AuthHelper authHelper;
@@ -66,10 +58,42 @@ public class CartActivity extends BaseActivity implements CartAdapter.CartAdapte
         setContentView(R.layout.activity_cart);
         initViews();
         initComponents();
-        setupRecyclerView(); // <-- Sửa lỗi khởi tạo Adapter trong hàm này
+        setupRecyclerView();
         setupClickListeners();
+        loadUserData();
         fetchCartData();
     }
+
+    private void loadUserData() {
+        String token = authHelper.getToken();
+        if (token == null || token.isEmpty()) {
+            return;
+        }
+        String authHeader = "Bearer " + token;
+
+        ApiClient.getUserApi().getUserProfile(authHeader).enqueue(new Callback<ApiResponse<User>>() {
+            @Override
+            public void onResponse(Call<ApiResponse<User>> call, Response<ApiResponse<User>> response) {
+                if (response.isSuccessful() && response.body() != null && response.body().isSuccess()) {
+                    User userProfile = response.body().getData();
+
+                    if (userProfile != null && userProfile.getAddress() != null && !userProfile.getAddress().isEmpty()) {
+                        runOnUiThread(() -> {
+                            editTextAddress.setText(userProfile.getAddress());
+                        });
+                    }
+                } else {
+                    android.util.Log.e("CartActivity", "Không thể tải thông tin người dùng. Lỗi: " + response.code());
+                }
+            }
+
+            @Override
+            public void onFailure(Call<ApiResponse<User>> call, Throwable t) {
+                android.util.Log.e("CartActivity", "Lỗi mạng khi tải thông tin người dùng: " + t.getMessage());
+            }
+        });
+    }
+
 
     private void initViews() {
         topAppBar = findViewById(R.id.topAppBar);
@@ -77,12 +101,10 @@ public class CartActivity extends BaseActivity implements CartAdapter.CartAdapte
         emptyCartView = findViewById(R.id.emptyCartView);
         textViewTotalPrice = findViewById(R.id.textViewTotalPrice);
         editTextAddress = findViewById(R.id.editTextAddress);
-        checkboxUseSavedAddress = findViewById(R.id.checkboxUseSavedAddress);
         radioButtonOnline = findViewById(R.id.radioButtonOnline);
         radioButtonCOD = findViewById(R.id.radioButtonCOD);
         buttonPlaceOrder = findViewById(R.id.buttonPlaceOrder);
         bottomBar = findViewById(R.id.bottomBar);
-        deliveryInfoCard = findViewById(R.id.deliveryInfoCard);
     }
 
     private void initComponents() {
@@ -109,17 +131,7 @@ public class CartActivity extends BaseActivity implements CartAdapter.CartAdapte
             }
             return false;
         });
-
         buttonPlaceOrder.setOnClickListener(v -> handlePlaceOrder());
-        checkboxUseSavedAddress.setOnCheckedChangeListener((buttonView, isChecked) -> {
-            editTextAddress.setEnabled(!isChecked);
-            if (isChecked) {
-                // editTextAddress.setText(authHelper.getUserAddress()); // Ví dụ
-                editTextAddress.setText("Địa chỉ đã lưu");
-            } else {
-                editTextAddress.setText("");
-            }
-        });
     }
 
     @Override
@@ -435,7 +447,6 @@ public class CartActivity extends BaseActivity implements CartAdapter.CartAdapte
     private void showLoading(boolean isLoading) {
         if (isLoading) {
             recyclerViewCartItems.setVisibility(View.GONE);
-            deliveryInfoCard.setVisibility(View.GONE);
             bottomBar.setVisibility(View.GONE);
             emptyCartView.setVisibility(View.GONE);
             // Có thể thêm một ProgressIndicator ở giữa màn hình nếu muốn
@@ -445,13 +456,11 @@ public class CartActivity extends BaseActivity implements CartAdapter.CartAdapte
     private void showDataView() {
         emptyCartView.setVisibility(View.GONE);
         recyclerViewCartItems.setVisibility(View.VISIBLE);
-        deliveryInfoCard.setVisibility(View.VISIBLE);
         bottomBar.setVisibility(View.VISIBLE);
     }
 
     private void showEmptyView(String message) {
         recyclerViewCartItems.setVisibility(View.GONE);
-        deliveryInfoCard.setVisibility(View.GONE);
         bottomBar.setVisibility(View.GONE);
         emptyCartView.setVisibility(View.VISIBLE);
         // Giả sử TextView trong empty_cart.xml có ID là textViewEmptyMessage

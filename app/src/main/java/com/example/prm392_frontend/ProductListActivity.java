@@ -48,6 +48,8 @@ public class ProductListActivity extends BaseActivity {
     private String currentSort = "None";
     private String searchQuery = "";
 
+    private final List<Integer> availableBanners = new ArrayList<>();
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -77,8 +79,16 @@ public class ProductListActivity extends BaseActivity {
 
         setupToolbar();
 
-        // Fetch categories first, then products
+        initializeBanners();
+
         fetchCategoriesFromApi();
+    }
+
+    private void initializeBanners() {
+        availableBanners.add(R.drawable.banner_best_seller);
+        availableBanners.add(R.drawable.banner_20_discount);
+        availableBanners.add(R.drawable.banner_10_discount);
+        availableBanners.add(R.drawable.banner_50_discount);
     }
 
     @Override
@@ -160,7 +170,6 @@ public class ProductListActivity extends BaseActivity {
     @Override
     protected void onResume() {
         super.onResume();
-        // Refresh menu when returning to this activity (in case user logged in)
         invalidateOptionsMenu();
     }
 
@@ -287,6 +296,7 @@ public class ProductListActivity extends BaseActivity {
                     if (productResponses != null) {
                         // Convert API response to Product models
                         allProducts = ProductMapper.fromResponseList(productResponses);
+                        assignRandomBanners(allProducts);
                         filteredProducts = new ArrayList<>(allProducts);
 
                         Log.d(TAG, "Fetched " + allProducts.size() + " products from API");
@@ -336,4 +346,33 @@ public class ProductListActivity extends BaseActivity {
         super.finish();
         overridePendingTransition(R.anim.slide_in_left, R.anim.slide_out_right);
     }
+
+    private void assignRandomBanners(List<Product> products) {
+        if (products == null || products.isEmpty() || availableBanners.isEmpty()) {
+            return;
+        }
+
+        for (Product p : products) {
+            p.setBannerResourceId(null);
+        }
+
+        java.util.Random random = new java.util.Random();
+        int productsWithBannersCount = Math.max(1, products.size() / 3);
+
+        List<Product> tempProductList = new ArrayList<>(products);
+
+        for (int i = 0; i < productsWithBannersCount && !tempProductList.isEmpty(); i++) {
+            int productIndex = random.nextInt(tempProductList.size());
+            Product targetProduct = tempProductList.get(productIndex);
+
+            int bannerIndex = random.nextInt(availableBanners.size());
+            Integer bannerId = availableBanners.get(bannerIndex);
+
+            targetProduct.setBannerResourceId(bannerId);
+            Log.d("BannerLogic", "Assigned banner '" + getResources().getResourceEntryName(bannerId) + "' to: " + targetProduct.getName());
+
+            tempProductList.remove(productIndex);
+        }
+    }
+
 }
