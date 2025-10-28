@@ -1,6 +1,8 @@
 package com.example.prm392_frontend.models;
 
-public class RegisterRequest {
+import java.io.Serializable;
+
+public class RegisterRequest implements Serializable {
     private String username;
     private String email;
     private String password;

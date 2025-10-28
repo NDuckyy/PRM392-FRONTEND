@@ -31,6 +31,20 @@ public class Product implements Parcelable {
     private String providerId;
     private String providerName;
 
+    private Integer bannerResourceId;
+
+    public Integer getBannerResourceId() {
+        return bannerResourceId;
+    }
+
+    public void setBannerResourceId(Integer bannerResourceId) {
+        this.bannerResourceId = bannerResourceId;
+    }
+
+    public boolean hasBanner() {
+        return bannerResourceId != null && bannerResourceId != 0;
+    }
+
     public Product(int id, String name, String description, double price, String imageUrl,
                    List<String> imageUrls, String category, double rating, String brand,
                    int popularity, String specifications) {

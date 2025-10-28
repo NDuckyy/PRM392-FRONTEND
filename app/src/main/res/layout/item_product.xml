@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <com.google.android.material.card.MaterialCardView xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:layout_margin="6dp"
@@ -16,14 +17,34 @@
         android:layout_height="wrap_content"
         android:orientation="vertical">
 
-        <ImageView
-            android:id="@+id/product_image"
+        <!-- [SỬA ĐỔI TẠI ĐÂY] Bọc ImageView trong một FrameLayout -->
+        <FrameLayout
             android:layout_width="match_parent"
-            android:layout_height="200dp"
-            android:background="#F5F5F5"
-            android:contentDescription="Product Image"
-            android:scaleType="centerCrop" />
+            android:layout_height="200dp">
 
+            <!-- 1. Ảnh sản phẩm (nằm dưới cùng) - giữ nguyên như cũ -->
+            <ImageView
+                android:id="@+id/product_image"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:background="#F5F5F5"
+                android:contentDescription="Product Image"
+                android:scaleType="centerCrop" />
+
+            <!-- 2. Banner giảm giá (nằm trên, ở góc trên bên phải) - VIEW MỚI -->
+            <ImageView
+                android:id="@+id/product_banner"
+                android:layout_width="60dp"
+                android:layout_height="60dp"
+                android:layout_gravity="top|end"
+                android:elevation="2dp"
+                android:visibility="gone"
+                tools:src="@drawable/banner_20_discount"
+                tools:visibility="visible" />
+
+        </FrameLayout>
+
+        <!-- Phần thông tin tên và giá sản phẩm giữ nguyên -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -40,7 +61,8 @@
                 android:minHeight="40dp"
                 android:textColor="#2D2D2D"
                 android:textSize="14sp"
-                android:textStyle="normal" />
+                android:textStyle="normal"
+                tools:text="Tên sản phẩm mẫu" />
 
             <TextView
                 android:id="@+id/product_price"
@@ -49,7 +71,8 @@
                 android:layout_marginTop="8dp"
                 android:textColor="#EE4D2D"
                 android:textSize="16sp"
-                android:textStyle="bold" />
+                android:textStyle="bold"
+                tools:text="1.500.000đ" />
         </LinearLayout>
     </LinearLayout>
 </com.google.android.material.card.MaterialCardView>

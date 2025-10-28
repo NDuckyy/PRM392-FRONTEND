@@ -1,0 +1,145 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:fillViewport="true"
+    android:background="#F4F6F9"
+    tools:context=".OtpVerificationActivity">
+
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:padding="24dp">
+
+        <!-- [SỬA LỖI] Đưa comment ra ngoài thuộc tính -->
+        <!-- Bọc ảnh trong CardView để làm tròn, đổ bóng và phóng to -->
+        <androidx.cardview.widget.CardView
+            android:id="@+id/cv_header_icon_container"
+            android:layout_width="100dp"
+            android:layout_height="100dp"
+            android:layout_marginTop="32dp"
+            app:cardCornerRadius="50dp"
+            app:cardElevation="8dp"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent">
+
+            <!-- Đảm bảo ảnh lấp đầy khung tròn -->
+            <ImageView
+                android:id="@+id/iv_header_icon"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:scaleType="centerCrop"
+                android:src="@drawable/otp_header"
+                android:contentDescription="Verification Icon"/>
+
+        </androidx.cardview.widget.CardView>
+
+
+        <!-- Tiêu đề chính -->
+        <TextView
+            android:id="@+id/tv_title"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="24dp"
+            android:text="Account Verification"
+            android:textColor="@android:color/black"
+            android:textSize="24sp"
+            android:textStyle="bold"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/cv_header_icon_container" />
+
+        <!-- Hướng dẫn chi tiết -->
+        <TextView
+            android:id="@+id/tv_otp_instruction"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:text="Mã OTP đã được gửi tới số điện thoại của bạn. Vui lòng nhập mã để hoàn tất đăng ký."
+            android:textAlignment="center"
+            android:textColor="@android:color/darker_gray"
+            android:textSize="16sp"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/tv_title" />
+
+        <!-- Layout cho các ô nhập OTP -->
+        <LinearLayout
+            android:id="@+id/otp_layout"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="32dp"
+            android:gravity="center"
+            android:orientation="horizontal"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/tv_otp_instruction">
+
+            <!-- Sử dụng thư viện PinView để tạo hiệu ứng các ô nhập riêng lẻ -->
+            <com.chaos.view.PinView
+                android:id="@+id/et_otp"
+                style="@style/PinWidget.PinView"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:cursorVisible="true"
+                android:inputType="number"
+                android:itemBackground="@drawable/bg_otp_box"
+                android:textColor="@android:color/black"
+                android:textSize="24sp"
+                android:textStyle="bold"
+                app:cursorColor="@color/design_default_color_primary"
+                app:hideLineWhenFilled="true"
+                app:itemCount="6"
+                app:itemHeight="50dp"
+                app:itemRadius="8dp"
+                app:itemSpacing="8dp"
+                app:itemWidth="50dp"
+                app:lineWidth="1dp"
+                app:viewType="rectangle" />
+
+        </LinearLayout>
+
+
+        <!-- Nút Xác Thực -->
+        <Button
+            android:id="@+id/btn_verify_otp"
+            android:layout_width="0dp"
+            android:layout_height="60dp"
+            android:layout_marginTop="32dp"
+            android:text="Verify Code"
+            android:textAllCaps="false"
+            android:textSize="18sp"
+            app:cornerRadius="12dp"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/otp_layout" />
+
+        <!-- Nút gửi lại mã -->
+        <TextView
+            android:id="@+id/tv_resend_code"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Resend Code"
+            android:textColor="@color/design_default_color_primary"
+            android:textSize="16sp"
+            android:layout_marginTop="24dp"
+            app:layout_constraintTop_toBottomOf="@id/btn_verify_otp"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"/>
+
+        <!-- ProgressBar -->
+        <ProgressBar
+            android:id="@+id/progress_bar"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:visibility="gone"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/tv_resend_code"
+            tools:visibility="visible" />
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
+</ScrollView>
