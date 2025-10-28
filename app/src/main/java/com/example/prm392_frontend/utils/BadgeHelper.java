@@ -43,6 +43,11 @@ public class BadgeHelper {
     public static void updateCartBadge(Context ctx, int cartCount) {
         ensureChannel(ctx);
 
+        NotificationManagerCompat nm = NotificationManagerCompat.from(ctx);
+
+        // Xóa thông báo cũ trước khi tạo mới (để launcher nhận biết thay đổi)
+        nm.cancel(NOTIFICATION_ID);
+
         NotificationCompat.Builder b = new NotificationCompat.Builder(ctx, CHANNEL_ID)
                 .setSmallIcon(R.mipmap.ic_launcher)
                 .setContentTitle("Cart updated")
@@ -55,21 +60,22 @@ public class BadgeHelper {
             b.setBadgeIconType(NotificationCompat.BADGE_ICON_SMALL);
         }
 
-        NotificationManagerCompat nm = NotificationManagerCompat.from(ctx);
         try {
             if (canPost(ctx)) {
-                nm.notify(NOTIFICATION_ID, b.build());
+                nm.notify((int) System.currentTimeMillis(), b.build()); // Dùng ID mới mỗi lần
             }
         } catch (SecurityException e) {
             e.printStackTrace();
         }
 
+        // Cập nhật badge icon
         if (cartCount > 0) {
             ShortcutBadger.applyCount(ctx.getApplicationContext(), cartCount);
         } else {
             ShortcutBadger.removeCount(ctx.getApplicationContext());
         }
     }
+
 
     /**
      * Gọi API thật để lấy số lượng cart hiện tại.
