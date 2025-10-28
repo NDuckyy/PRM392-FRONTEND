@@ -1,6 +1,9 @@
 package com.example.prm392_frontend;
 
+import android.Manifest;
 import android.content.Intent;
+import android.content.pm.PackageManager;
+import android.os.Build;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.Menu;
@@ -13,6 +16,7 @@ import androidx.annotation.NonNull;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.SearchView;
+import androidx.core.app.ActivityCompat;
 import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import android.Manifest;
@@ -57,6 +61,8 @@ public class ProductListActivity extends BaseActivity {
     private String currentSort = "None";
     private String searchQuery = "";
 
+    private final List<Integer> availableBanners = new ArrayList<>();
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -86,6 +92,8 @@ public class ProductListActivity extends BaseActivity {
 
         setupToolbar();
 
+        initializeBanners();
+
         // >>> ADD: xin quyền POST_NOTIFICATIONS (Android 13+) rồi đồng bộ badge
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
                 ActivityCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS)
@@ -108,6 +116,13 @@ public class ProductListActivity extends BaseActivity {
 
         // Fetch categories first, then products
         fetchCategoriesFromApi();
+    }
+
+    private void initializeBanners() {
+        availableBanners.add(R.drawable.banner_best_seller);
+        availableBanners.add(R.drawable.banner_20_discount);
+        availableBanners.add(R.drawable.banner_10_discount);
+        availableBanners.add(R.drawable.banner_50_discount);
     }
 
     @Override
@@ -193,6 +208,7 @@ public class ProductListActivity extends BaseActivity {
         invalidateOptionsMenu();
     }
 
+
     private void showSortDialog() {
         String[] sortOptions = {"Price: Low to High", "Price: High to Low"};
         new AlertDialog.Builder(this)
@@ -245,9 +261,9 @@ public class ProductListActivity extends BaseActivity {
             String query = searchQuery.toLowerCase().trim();
             filteredProducts = filteredProducts.stream()
                     .filter(p -> p.getName().toLowerCase().contains(query) ||
-                            p.getDescription().toLowerCase().contains(query) ||
-                            p.getCategory().toLowerCase().contains(query) ||
-                            p.getBrand().toLowerCase().contains(query))
+                                 p.getDescription().toLowerCase().contains(query) ||
+                                 p.getCategory().toLowerCase().contains(query) ||
+                                 p.getBrand().toLowerCase().contains(query))
                     .collect(Collectors.toList());
         }
 
@@ -315,6 +331,7 @@ public class ProductListActivity extends BaseActivity {
                     if (productResponses != null) {
                         // Convert API response to Product models
                         allProducts = ProductMapper.fromResponseList(productResponses);
+                        assignRandomBanners(allProducts);
                         filteredProducts = new ArrayList<>(allProducts);
 
                         Log.d(TAG, "Fetched " + allProducts.size() + " products from API");
@@ -382,4 +399,33 @@ public class ProductListActivity extends BaseActivity {
         super.finish();
         overridePendingTransition(R.anim.slide_in_left, R.anim.slide_out_right);
     }
+
+    private void assignRandomBanners(List<Product> products) {
+        if (products == null || products.isEmpty() || availableBanners.isEmpty()) {
+            return;
+        }
+
+        for (Product p : products) {
+            p.setBannerResourceId(null);
+        }
+
+        java.util.Random random = new java.util.Random();
+        int productsWithBannersCount = Math.max(1, products.size() / 3);
+
+        List<Product> tempProductList = new ArrayList<>(products);
+
+        for (int i = 0; i < productsWithBannersCount && !tempProductList.isEmpty(); i++) {
+            int productIndex = random.nextInt(tempProductList.size());
+            Product targetProduct = tempProductList.get(productIndex);
+
+            int bannerIndex = random.nextInt(availableBanners.size());
+            Integer bannerId = availableBanners.get(bannerIndex);
+
+            targetProduct.setBannerResourceId(bannerId);
+            Log.d("BannerLogic", "Assigned banner '" + getResources().getResourceEntryName(bannerId) + "' to: " + targetProduct.getName());
+
+            tempProductList.remove(productIndex);
+        }
+    }
+
 }
