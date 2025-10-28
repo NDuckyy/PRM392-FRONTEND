@@ -43,7 +43,7 @@ import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
 
-public class ProductListActivity extends BaseActivity {
+public class ProductListActivity extends AppCompatActivity {
 
     private static final String TAG = "ProductListActivity";
 
@@ -76,6 +76,9 @@ public class ProductListActivity extends BaseActivity {
         errorText = findViewById(R.id.error_text);
 
         recyclerView.setLayoutManager(new GridLayoutManager(this, 2));
+
+        // Setup bottom navigation
+        setupBottomNavigation();
 
         allProducts = new ArrayList<>();
         filteredProducts = new ArrayList<>();
@@ -125,6 +128,46 @@ public class ProductListActivity extends BaseActivity {
         availableBanners.add(R.drawable.banner_50_discount);
     }
 
+    private void setupBottomNavigation() {
+        com.google.android.material.bottomnavigation.BottomNavigationView navigationBar = findViewById(R.id.navigation_bar);
+
+        if (navigationBar != null) {
+            navigationBar.setSelectedItemId(R.id.nav_products);
+
+            navigationBar.setOnItemSelectedListener(item -> {
+                int itemId = item.getItemId();
+
+                if (itemId == R.id.nav_home) {
+                    String role = authHelper.getRole();
+                    if ("PROVIDER".equalsIgnoreCase(role)) {
+                        navigateToActivity(ProviderDashboardActivity.class);
+                    }
+                    // For non-provider, home is products list, already here
+                    return true;
+                } else if (itemId == R.id.nav_products) {
+                    // Already on products list
+                    return true;
+                } else if (itemId == R.id.nav_cart) {
+                    navigateToActivity(CartActivity.class);
+                    return true;
+                } else if (itemId == R.id.nav_messages) {
+                    navigateToActivity(ConversationListActivity.class);
+                    return true;
+                } else if (itemId == R.id.nav_profile) {
+                    navigateToActivity(UserProfileActivity.class);
+                    return true;
+                }
+                return false;
+            });
+        }
+    }
+
+    private void navigateToActivity(Class<?> activityClass) {
+        Intent intent = new Intent(this, activityClass);
+        intent.setFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
+        startActivity(intent);
+    }
+
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         getMenuInflater().inflate(R.menu.menu_product_list, menu);
@@ -154,6 +197,27 @@ public class ProductListActivity extends BaseActivity {
                 public boolean onQueryTextChange(String newText) {
                     searchQuery = newText;
                     applyFiltersAndSort();
+                    return true;
+                }
+            });
+
+            // Add listener for when SearchView is closed
+            searchItem.setOnActionExpandListener(new MenuItem.OnActionExpandListener() {
+                @Override
+                public boolean onMenuItemActionExpand(MenuItem item) {
+                    return true;
+                }
+
+                @Override
+                public boolean onMenuItemActionCollapse(MenuItem item) {
+                    // Clear search query and SearchView when closed
+                    searchQuery = "";
+                    searchView.setQuery("", false);
+                    searchView.clearFocus();
+
+                    // Immediately apply filters to refresh list
+                    applyFiltersAndSort();
+
                     return true;
                 }
             });
@@ -260,10 +324,16 @@ public class ProductListActivity extends BaseActivity {
         if (searchQuery != null && !searchQuery.trim().isEmpty()) {
             String query = searchQuery.toLowerCase().trim();
             filteredProducts = filteredProducts.stream()
-                    .filter(p -> p.getName().toLowerCase().contains(query) ||
-                                 p.getDescription().toLowerCase().contains(query) ||
-                                 p.getCategory().toLowerCase().contains(query) ||
-                                 p.getBrand().toLowerCase().contains(query))
+                    .filter(p -> {
+                        String name = p.getName() != null ? p.getName().toLowerCase() : "";
+                        String description = p.getDescription() != null ? p.getDescription().toLowerCase() : "";
+                        String category = p.getCategory() != null ? p.getCategory().toLowerCase() : "";
+                        String brand = p.getBrand() != null ? p.getBrand().toLowerCase() : "";
+                        return name.contains(query) ||
+                               description.contains(query) ||
+                               category.contains(query) ||
+                               brand.contains(query);
+                    })
                     .collect(Collectors.toList());
         }
 

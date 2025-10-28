@@ -7,7 +7,11 @@
         <item name="colorAccent">@color/orange_primary</item>
     </style>
 
-    <style name="Theme.PRM392frontend" parent="Base.Theme.PRM392frontend" />
+    <style name="Theme.PRM392frontend" parent="Base.Theme.PRM392frontend">
+        <!-- Disable SearchView scrim/background overlay -->
+        <item name="android:windowContentOverlay">@null</item>
+    </style>
+
     <style name="Shape_RoundFull">
         <item name="cornerFamily">rounded</item>
         <item name="cornerSize">50%</item>

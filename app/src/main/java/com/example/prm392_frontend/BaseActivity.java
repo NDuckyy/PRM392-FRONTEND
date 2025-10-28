@@ -20,14 +20,33 @@ public abstract class BaseActivity extends AppCompatActivity {
 
     @Override
     public void setContentView(int layoutResID) {
-        FrameLayout wrapper = new FrameLayout(this);
+        // Create a simple container
+        android.widget.RelativeLayout wrapper = new android.widget.RelativeLayout(this);
+        wrapper.setLayoutParams(new ViewGroup.LayoutParams(
+            ViewGroup.LayoutParams.MATCH_PARENT,
+            ViewGroup.LayoutParams.MATCH_PARENT
+        ));
 
-        // 1) Inflate content trước, giữ reference
-        View content = getLayoutInflater().inflate(layoutResID, wrapper, false);
+        // 1) Inflate content - fill parent
+        View content = getLayoutInflater().inflate(layoutResID, null, false);
+        android.widget.RelativeLayout.LayoutParams contentParams =
+            new android.widget.RelativeLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.MATCH_PARENT
+            );
+        content.setLayoutParams(contentParams);
+        content.setId(View.generateViewId());
         wrapper.addView(content);
 
-        // 2) Inflate bottom nav sau (trên cùng)
-        View navRoot = getLayoutInflater().inflate(R.layout.navigation_bar, wrapper, false);
+        // 2) Inflate bottom nav - align parent bottom
+        View navRoot = getLayoutInflater().inflate(R.layout.navigation_bar, null, false);
+        android.widget.RelativeLayout.LayoutParams navParams =
+            new android.widget.RelativeLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT
+            );
+        navParams.addRule(android.widget.RelativeLayout.ALIGN_PARENT_BOTTOM);
+        navRoot.setLayoutParams(navParams);
         wrapper.addView(navRoot);
 
         super.setContentView(wrapper);
@@ -76,13 +95,13 @@ public abstract class BaseActivity extends AppCompatActivity {
                             navigateToActivity(ProviderDashboardActivity.class);
                         }
                     } else {
-                        if (!(this instanceof ProductListActivity)) {
+                        if (!this.getClass().equals(ProductListActivity.class)) {
                             navigateToActivity(ProductListActivity.class);
                         }
                     }
                     return true;
                 } else if (itemId == R.id.nav_products) {
-                    if (!(this instanceof ProductListActivity)) {
+                    if (!this.getClass().equals(ProductListActivity.class)) {
                         navigateToActivity(ProductListActivity.class);
                     }
                     return true;
@@ -113,7 +132,7 @@ public abstract class BaseActivity extends AppCompatActivity {
     private void highlightCurrentTab() {
         if (navigationBar == null) return;
 
-        if (this instanceof ProductListActivity) {
+        if (this.getClass().equals(ProductListActivity.class)) {
             navigationBar.setSelectedItemId(R.id.nav_products);
         } else if (this instanceof UserProfileActivity) {
             navigationBar.setSelectedItemId(R.id.nav_profile);
