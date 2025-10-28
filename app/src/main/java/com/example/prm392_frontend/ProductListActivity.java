@@ -19,6 +19,12 @@ import androidx.appcompat.widget.SearchView;
 import androidx.core.app.ActivityCompat;
 import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
+import android.Manifest;
+import android.content.pm.PackageManager;
+import android.os.Build;
+import androidx.core.app.ActivityCompat;
+
+import com.example.prm392_frontend.utils.BadgeHelper;
 import com.example.prm392_frontend.api.ApiClient;
 import com.example.prm392_frontend.models.ApiResponse;
 import com.example.prm392_frontend.models.CategoryResponse;
@@ -26,11 +32,13 @@ import com.example.prm392_frontend.models.ProductResponse;
 import com.example.prm392_frontend.utils.AuthHelper;
 import com.example.prm392_frontend.utils.ProductMapper;
 import com.google.android.material.appbar.MaterialToolbar;
+
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
+
 import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
@@ -39,6 +47,7 @@ public class ProductListActivity extends BaseActivity {
 
     private static final String TAG = "ProductListActivity";
 
+    private static final int REQ_POST_NOTI = 100;
     private RecyclerView recyclerView;
     private ProductAdapter adapter;
     private List<Product> allProducts;
@@ -85,6 +94,27 @@ public class ProductListActivity extends BaseActivity {
 
         initializeBanners();
 
+        // >>> ADD: xin quyền POST_NOTIFICATIONS (Android 13+) rồi đồng bộ badge
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
+                ActivityCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS)
+                        != PackageManager.PERMISSION_GRANTED) {
+            ActivityCompat.requestPermissions(
+                    this,
+                    new String[]{Manifest.permission.POST_NOTIFICATIONS},
+                    REQ_POST_NOTI
+            );
+        } else {
+            // Đồng bộ badge khi vào app (mock/API tuỳ BadgeHelper)
+            BadgeHelper.USE_MOCK = false; // tắt mock, gọi API thật
+
+            AuthHelper auth = new AuthHelper(getApplicationContext());
+            String token = auth.getToken();
+
+            BadgeHelper.syncFromApi(this, token);
+        }
+        // <<< END ADD
+
+        // Fetch categories first, then products
         fetchCategoriesFromApi();
     }
 
@@ -174,6 +204,7 @@ public class ProductListActivity extends BaseActivity {
     @Override
     protected void onResume() {
         super.onResume();
+        // Refresh menu when returning to this activity (in case user logged in)
         invalidateOptionsMenu();
     }
 
@@ -344,6 +375,24 @@ public class ProductListActivity extends BaseActivity {
         recyclerView.setVisibility(View.GONE);
         progressBar.setVisibility(View.GONE);
     }
+
+    // >>> ADD: nhận kết quả xin quyền và đồng bộ badge thật
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        if (requestCode == REQ_POST_NOTI &&
+                grantResults.length > 0 &&
+                grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+
+            BadgeHelper.USE_MOCK = false;
+
+            AuthHelper auth = new AuthHelper(getApplicationContext());
+            String token = auth.getToken();
+
+            BadgeHelper.syncFromApi(this, token);
+        }
+    }
+    // <<< END ADD
 
     @Override
     public void finish() {

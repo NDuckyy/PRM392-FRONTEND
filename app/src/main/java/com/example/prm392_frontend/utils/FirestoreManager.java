@@ -68,15 +68,16 @@ public class FirestoreManager {
     }
 
     /**
-     * Listen to realtime conversations list
+     * Listen to realtime conversations list for a specific user
      */
-    public void listenToConversations(int limit, OnConversationsUpdateListener listener) {
+    public void listenToConversations(int limit, String currentUserId, OnConversationsUpdateListener listener) {
         // Remove old listener if exists
         stopConversationListening();
 
-        Log.d(TAG, "Starting to listen to conversations");
+        Log.d(TAG, "Starting to listen to conversations for user: " + currentUserId);
 
         // Listen to conversations collection with realtime updates
+        // Filter conversations where conversationId contains currentUserId
         conversationListener = db.collection(COLLECTION_CONVERSATIONS)
                 .orderBy("updatedAt", Query.Direction.DESCENDING)
                 .limit(limit)
@@ -90,18 +91,42 @@ public class FirestoreManager {
                     if (snapshots != null && !snapshots.isEmpty()) {
                         List<ConversationSummary> conversations = new ArrayList<>();
                         for (DocumentSnapshot doc : snapshots.getDocuments()) {
-                            ConversationSummary conv = documentToConversation(doc);
-                            if (conv != null) {
-                                conversations.add(conv);
+                            String conversationId = doc.getId();
+
+                            // Parse conversationId (format: userId-providerId)
+                            // Check if current user is one of the participants
+                            if (conversationId != null && isUserInConversation(conversationId, currentUserId)) {
+                                ConversationSummary conv = documentToConversation(doc);
+                                if (conv != null) {
+                                    conversations.add(conv);
+                                }
                             }
                         }
-                        Log.d(TAG, "Received " + conversations.size() + " conversations from Firestore");
+                        Log.d(TAG, "Received " + conversations.size() + " conversations for user " + currentUserId);
                         listener.onConversationsUpdated(conversations);
                     } else {
                         Log.d(TAG, "No conversations yet");
                         listener.onConversationsUpdated(new ArrayList<>());
                     }
                 });
+    }
+
+    /**
+     * Check if the current user is a participant in the conversation
+     * ConversationId format: userId-providerId
+     */
+    private boolean isUserInConversation(String conversationId, String currentUserId) {
+        if (conversationId == null || currentUserId == null) {
+            return false;
+        }
+
+        String[] parts = conversationId.split("-", 2);
+        if (parts.length == 2) {
+            // Check if currentUserId matches either part
+            return parts[0].equals(currentUserId) || parts[1].equals(currentUserId);
+        }
+
+        return false;
     }
 
     /**

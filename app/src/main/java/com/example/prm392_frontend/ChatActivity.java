@@ -171,18 +171,10 @@ public class ChatActivity extends AppCompatActivity implements FirestoreManager.
                     ApiResponse<MessageResponse> apiResponse = response.body();
 
                     if (apiResponse.getCode() == 200 && apiResponse.getData() != null) {
-                        MessageResponse sentMessage = apiResponse.getData();
-
-                        // Log to check what backend returns
-                        Log.d(TAG, "Message sent - senderId from backend: " + sentMessage.getSenderId());
-                        Log.d(TAG, "Message sent - senderType: " + sentMessage.getSenderType());
-
-                        // Add message to list
-                        adapter.addMessage(sentMessage);
+                        // Message sent successfully
+                        // Don't add message locally - let Firestore realtime listener handle it
                         etMessage.setText("");
-                        scrollToBottom();
-
-                        Log.d(TAG, "Message sent successfully");
+                        Log.d(TAG, "Message sent successfully, waiting for Firestore update");
                     } else {
                         Toast.makeText(ChatActivity.this,
                                 "Failed to send: " + apiResponse.getMessage(),

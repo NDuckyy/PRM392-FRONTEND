@@ -24,11 +24,14 @@ import com.bumptech.glide.load.engine.DiskCacheStrategy;
 import com.example.prm392_frontend.api.ApiClient; // Thêm import
 import com.example.prm392_frontend.models.ApiResponse; // Thêm import
 import com.example.prm392_frontend.models.CartAddRequest; // Thêm import
+import com.example.prm392_frontend.models.LocationResponse;
 import com.example.prm392_frontend.models.ProductResponse;
 import com.example.prm392_frontend.utils.AuthHelper;
 import com.google.android.material.appbar.CollapsingToolbarLayout;
 import com.google.android.material.appbar.MaterialToolbar;
 import com.google.android.material.button.MaterialButton;
+import com.google.android.material.floatingactionbutton.FloatingActionButton;
+
 import java.text.NumberFormat;
 import java.util.List;
 import java.util.Locale;
@@ -58,6 +61,9 @@ public class ProductDetailsActivity extends AppCompatActivity {
     private int quantity = 1;
     private AuthHelper authHelper;
 
+    private FloatingActionButton btnDirection;
+
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -72,6 +78,8 @@ public class ProductDetailsActivity extends AppCompatActivity {
             finish();
             return;
         }
+        btnDirection = findViewById(R.id.btn_direction);
+        btnDirection.setOnClickListener(v -> fetchLocationAndOpenMyMap());
 
         // Initialize views
         MaterialToolbar toolbar = findViewById(R.id.toolbar);
@@ -164,7 +172,7 @@ public class ProductDetailsActivity extends AppCompatActivity {
             return;
         }
 
-        String providerId = product.getProviderId();
+        String providerId = String.valueOf(product.getProviderId());
         String providerName = product.getProviderName();
 
         if (providerId != null && !providerId.isEmpty()) {
@@ -305,39 +313,39 @@ public class ProductDetailsActivity extends AppCompatActivity {
         ApiClient.addProductToCart(token, request).enqueue(new Callback<ApiResponse<Object>>() {
             @Override
             public void onResponse(Call<ApiResponse<Object>> call, Response<ApiResponse<Object>> response) {
-                // Kích hoạt lại nút
+                // Re-enable button
                 addToCartButton.setEnabled(true);
                 addToCartButton.setText(originalButtonText);
 
                 if (response.isSuccessful() && response.body() != null) {
-                    // Thêm vào giỏ hàng thành công
+                    // Show success message
                     Toast.makeText(ProductDetailsActivity.this, "Added to cart successfully!", Toast.LENGTH_SHORT).show();
+
+                    // Animate button on success
                     animateButtonSuccess();
                 } else {
-                    // Xử lý lỗi từ server (ví dụ: một người khác vừa mua hết hàng ngay lúc đó)
+                    // Handle API error (e.g., product out of stock, invalid request)
                     String errorMessage = "Failed to add to cart. Please try again.";
                     if (response.body() != null && response.body().getMessage() != null) {
                         errorMessage = response.body().getMessage();
                     }
                     Toast.makeText(ProductDetailsActivity.this, errorMessage, Toast.LENGTH_LONG).show();
-                    Log.e("AddToCart", "API Error: " + response.code() + " " + response.message());
+                    Log.e(TAG, "API Error: " + response.code() + " " + response.message());
                 }
             }
 
             @Override
             public void onFailure(Call<ApiResponse<Object>> call, Throwable t) {
-                // Kích hoạt lại nút
+                // Re-enable button
                 addToCartButton.setEnabled(true);
                 addToCartButton.setText(originalButtonText);
 
-                // Xử lý lỗi mạng
+                // Handle network failure
                 Toast.makeText(ProductDetailsActivity.this, "Network error. Please check your connection.", Toast.LENGTH_LONG).show();
-                Log.e("AddToCart", "Network Failure: ", t);
+                Log.e(TAG, "Network Failure: ", t);
             }
         });
     }
-
-
 
     private void animateButtonSuccess() {
         // Animate button
@@ -465,4 +473,52 @@ public class ProductDetailsActivity extends AppCompatActivity {
             }
         }
     }
+
+    private void fetchLocationAndOpenMyMap() {
+        btnDirection.setEnabled(false);
+
+        String providerName;
+        try {
+            providerName = product.getProviderId();
+        } catch (Exception e) {
+            Toast.makeText(this, "Provider ID không hợp lệ", Toast.LENGTH_SHORT).show();
+            btnDirection.setEnabled(true);
+            return;
+        }
+
+        ApiClient.getLocationByName(providerName).enqueue(new retrofit2.Callback<com.example.prm392_frontend.models.LocationResponse>() {
+            @Override
+            public void onResponse(retrofit2.Call<com.example.prm392_frontend.models.LocationResponse> call,
+                                   retrofit2.Response<com.example.prm392_frontend.models.LocationResponse> response) {
+                btnDirection.setEnabled(true);
+                if (!response.isSuccessful() || response.body() == null) {
+                    Toast.makeText(ProductDetailsActivity.this, "Không lấy được vị trí cửa hàng", Toast.LENGTH_LONG).show();
+                    return;
+                }
+
+                com.example.prm392_frontend.models.LocationResponse body = response.body();
+                double lat = body.latitude;
+                double lng = body.longitude;
+                String label = (body.provider != null && body.provider.providerName != null)
+                        ? body.provider.providerName
+                        : (product.getProviderName() != null ? product.getProviderName() : "Cửa hàng");
+
+                // ✅ Mở MapsActivity thay vì Google Maps
+                Intent intent = new Intent(ProductDetailsActivity.this, MapsActivity.class);
+                intent.putExtra("store_lat", lat);
+                intent.putExtra("store_lng", lng);
+                intent.putExtra("store_address", label);
+                startActivity(intent);
+            }
+
+            @Override
+            public void onFailure(retrofit2.Call<com.example.prm392_frontend.models.LocationResponse> call, Throwable t) {
+                btnDirection.setEnabled(true);
+                Toast.makeText(ProductDetailsActivity.this, "Lỗi mạng. Vui lòng thử lại.", Toast.LENGTH_LONG).show();
+                Log.e(TAG, "fetchLocationAndOpenMyMap failure", t);
+            }
+        });
+    }
+
+
 }

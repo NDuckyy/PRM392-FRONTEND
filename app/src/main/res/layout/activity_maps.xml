@@ -15,11 +15,19 @@
         android:gravity="center"
         android:padding="8dp">
 
+        <!-- Nút Back mới -->
+        <Button
+            android:id="@+id/btnBack"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Back" />
+
         <Button
             android:id="@+id/btnMyLocation"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="My Location"/>
+            android:text="My Location"
+            android:layout_marginLeft="16dp"/>
 
         <Button
             android:id="@+id/btnDirections"
