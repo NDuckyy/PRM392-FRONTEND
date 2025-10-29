@@ -375,6 +375,52 @@
                     </LinearLayout>
                 </com.google.android.material.card.MaterialCardView>
 
+                <!-- ===================== LOGOUT SECTION ===================== -->
+                <com.google.android.material.card.MaterialCardView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="12dp"
+                    android:layout_marginBottom="16dp"
+                    app:cardUseCompatPadding="true"
+                    app:cardElevation="2dp"
+                    app:cardCornerRadius="22dp"
+                    app:strokeColor="@color/failure_color"
+                    app:strokeWidth="1dp">
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical"
+                        android:padding="16dp">
+
+                        <com.google.android.material.button.MaterialButton
+                            android:id="@+id/btnLogout"
+                            style="@style/Widget.Material3.Button.OutlinedButton"
+                            android:layout_width="match_parent"
+                            android:layout_height="60dp"
+                            android:text="Logout"
+                            android:textColor="@color/failure_color"
+                            android:textStyle="bold"
+                            android:textSize="16sp"
+                            app:icon="@android:drawable/ic_lock_power_off"
+                            app:iconPadding="12dp"
+                            app:iconGravity="textStart"
+                            app:iconTint="@color/failure_color"
+                            app:strokeColor="@color/failure_color"
+                            app:strokeWidth="2dp"
+                            app:cornerRadius="16dp" />
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_gravity="center"
+                            android:layout_marginTop="8dp"
+                            android:text="You will be signed out of your account"
+                            android:textSize="12sp"
+                            android:textColor="?attr/colorOutline" />
+                    </LinearLayout>
+                </com.google.android.material.card.MaterialCardView>
+
             </LinearLayout>
         </androidx.core.widget.NestedScrollView>
 

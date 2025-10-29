@@ -67,6 +67,10 @@ public class UserProfileActivity extends BaseActivity {
         String rawToken = auth.getToken();
         if (!auth.isLoggedIn() || rawToken == null || rawToken.trim().isEmpty()) {
             Toast.makeText(this, "Bạn chưa đăng nhập!", Toast.LENGTH_LONG).show();
+            // Redirect to LoginActivity
+            Intent loginIntent = new Intent(UserProfileActivity.this, LoginActivity.class);
+            loginIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+            startActivity(loginIntent);
             finish();
             return;
         }
@@ -118,6 +122,22 @@ public class UserProfileActivity extends BaseActivity {
             Intent intent = new Intent(UserProfileActivity.this, BecomeProviderActivity.class);
             startActivity(intent);
         });
+
+        ui.btnLogout.setOnClickListener(v -> handleLogout());
+    }
+
+    private void handleLogout() {
+        // Clear authentication data
+        auth.logout();
+
+        // Show success message
+        Toast.makeText(this, "Logged out successfully", Toast.LENGTH_SHORT).show();
+
+        // Navigate to ProductListActivity and clear back stack
+        Intent intent = new Intent(UserProfileActivity.this, ProductListActivity.class);
+        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+        startActivity(intent);
+        finish();
     }
 
     private void setupToolbar() {

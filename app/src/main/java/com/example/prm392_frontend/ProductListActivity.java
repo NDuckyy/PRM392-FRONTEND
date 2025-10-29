@@ -172,14 +172,6 @@ public class ProductListActivity extends AppCompatActivity {
     public boolean onCreateOptionsMenu(Menu menu) {
         getMenuInflater().inflate(R.menu.menu_product_list, menu);
 
-        // Update Login/Logout menu item based on auth state
-        MenuItem authItem = menu.findItem(R.id.action_auth);
-        if (authHelper.isLoggedIn()) {
-            authItem.setTitle("Logout");
-        } else {
-            authItem.setTitle("Login");
-        }
-
         MenuItem searchItem = menu.findItem(R.id.action_search);
         SearchView searchView = (SearchView) searchItem.getActionView();
 
@@ -230,10 +222,7 @@ public class ProductListActivity extends AppCompatActivity {
         setSupportActionBar(toolbar);
         toolbar.setOnMenuItemClickListener(item -> {
             int id = item.getItemId();
-            if (id == R.id.action_auth) {
-                handleAuthAction();
-                return true;
-            } else if (id == R.id.action_sort) {
+            if (id == R.id.action_sort) {
                 showSortDialog();
                 return true;
             } else if (id == R.id.action_filter) {
@@ -243,35 +232,6 @@ public class ProductListActivity extends AppCompatActivity {
             return false;
         });
     }
-
-    private void handleAuthAction() {
-        if (authHelper.isLoggedIn()) {
-            // Logout
-            new AlertDialog.Builder(this)
-                    .setTitle("Logout")
-                    .setMessage("Are you sure you want to logout?")
-                    .setPositiveButton("Logout", (dialog, which) -> {
-                        authHelper.logout();
-                        Toast.makeText(this, "Logged out successfully", Toast.LENGTH_SHORT).show();
-                        // Refresh menu to show Login
-                        invalidateOptionsMenu();
-                    })
-                    .setNegativeButton("Cancel", null)
-                    .show();
-        } else {
-            // Login - navigate to LoginActivity
-            Intent intent = new Intent(ProductListActivity.this, LoginActivity.class);
-            startActivity(intent);
-        }
-    }
-
-    @Override
-    protected void onResume() {
-        super.onResume();
-        // Refresh menu when returning to this activity (in case user logged in)
-        invalidateOptionsMenu();
-    }
-
 
     private void showSortDialog() {
         String[] sortOptions = {"Price: Low to High", "Price: High to Low"};
