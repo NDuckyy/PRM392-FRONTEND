@@ -79,7 +79,11 @@
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:fillViewport="true"
-            android:padding="16dp"
+            android:paddingStart="16dp"
+            android:paddingTop="16dp"
+            android:paddingEnd="16dp"
+            android:paddingBottom="80dp"
+            android:clipToPadding="false"
             android:visibility="visible">
 
             <LinearLayout
@@ -430,7 +434,11 @@
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:fillViewport="true"
-            android:padding="16dp"
+            android:paddingStart="16dp"
+            android:paddingTop="16dp"
+            android:paddingEnd="16dp"
+            android:paddingBottom="80dp"
+            android:clipToPadding="false"
             android:visibility="gone">
 
             <LinearLayout
@@ -558,5 +566,6 @@
         app:layout_anchor="@id/content"
         app:layout_anchorGravity="bottom|end"
         app:behavior_autoHide="true" />
+
 
 </androidx.coordinatorlayout.widget.CoordinatorLayout>

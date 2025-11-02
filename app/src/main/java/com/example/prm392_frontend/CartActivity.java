@@ -13,6 +13,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.appcompat.app.AlertDialog;
+import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -37,7 +38,7 @@ import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
 
-public class CartActivity extends BaseActivity implements CartAdapter.CartAdapterListener {
+public class CartActivity extends AppCompatActivity implements CartAdapter.CartAdapterListener {
 
     private MaterialToolbar topAppBar;
     private RecyclerView recyclerViewCartItems;
@@ -137,6 +138,7 @@ public class CartActivity extends BaseActivity implements CartAdapter.CartAdapte
     @Override
     protected void onResume() {
         super.onResume();
+
         // Gọi fetchCartData() mỗi khi activity quay trở lại
         // Điều này đảm bảo dữ liệu giỏ hàng luôn được làm mới
         fetchCartData();

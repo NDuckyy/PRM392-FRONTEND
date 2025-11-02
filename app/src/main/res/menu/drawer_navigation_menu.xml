@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+    <group>
+        <item
+            android:id="@+id/nav_products"
+            android:icon="@android:drawable/ic_menu_view"
+            android:title="Products" />
+        <item
+            android:id="@+id/nav_provider_dashboard"
+            android:icon="@android:drawable/ic_menu_manage"
+            android:title="Provider Dashboard"
+            android:visible="false" />
+        <item
+            android:id="@+id/nav_cart"
+            android:icon="@android:drawable/ic_menu_add"
+            android:title="Cart" />
+        <item
+            android:id="@+id/nav_messages"
+            android:icon="@android:drawable/ic_dialog_email"
+            android:title="Messages" />
+        <item
+            android:id="@+id/nav_profile"
+            android:icon="@android:drawable/ic_menu_myplaces"
+            android:title="Profile" />
+    </group>
+
+    <item android:title="Account">
+        <menu>
+            <item
+                android:id="@+id/nav_login"
+                android:icon="@android:drawable/ic_lock_idle_lock"
+                android:title="Login"
+                android:visible="false" />
+            <item
+                android:id="@+id/nav_logout"
+                android:icon="@android:drawable/ic_lock_power_off"
+                android:title="Logout"
+                android:visible="false" />
+        </menu>
+    </item>
+</menu>

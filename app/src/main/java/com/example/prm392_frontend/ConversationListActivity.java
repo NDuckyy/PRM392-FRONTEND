@@ -8,6 +8,7 @@ import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -19,7 +20,7 @@ import com.google.android.material.appbar.MaterialToolbar;
 import java.util.ArrayList;
 import java.util.List;
 
-public class ConversationListActivity extends BaseActivity
+public class ConversationListActivity extends AppCompatActivity
         implements ConversationAdapter.OnConversationClickListener,
                    FirestoreManager.OnConversationsUpdateListener {
     private static final String TAG = "ConversationList";
@@ -150,6 +151,7 @@ public class ConversationListActivity extends BaseActivity
     @Override
     protected void onResume() {
         super.onResume();
+
         // Check login status when activity resumes (e.g., after logout)
         if (!authHelper.isLoggedIn()) {
             // User logged out, clear conversations and show login required

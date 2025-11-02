@@ -26,4 +26,8 @@
     <string name="orders_title">Order History</string>
     <string name="orders_subtitle">Recent 10 orders</string>
     <string name="orders_empty">No orders yet</string>
+
+    <!-- Navigation Drawer -->
+    <string name="navigation_drawer_open">Open navigation drawer</string>
+    <string name="navigation_drawer_close">Close navigation drawer</string>
 </resources>

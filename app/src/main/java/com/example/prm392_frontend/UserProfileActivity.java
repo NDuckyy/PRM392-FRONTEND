@@ -9,6 +9,7 @@ import android.view.View;
 import android.widget.Toast;
 
 import androidx.annotation.Nullable;
+import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
 
 import com.example.prm392_frontend.databinding.ActivityUserProfileBinding;
@@ -39,7 +40,7 @@ import okhttp3.RequestBody;
 import okhttp3.Response;
 import okhttp3.logging.HttpLoggingInterceptor;
 
-public class UserProfileActivity extends BaseActivity {
+public class UserProfileActivity extends AppCompatActivity {
 
     private static final String API_ORDERS  = "https://prm392-backend.nducky.id.vn/api/order";
     private static final String API_PROFILE = "https://prm392-backend.nducky.id.vn/api/users/profile";
@@ -172,6 +173,11 @@ public class UserProfileActivity extends BaseActivity {
         orderAdapter = new OrderAdapter(orders);
         ui.rvOrders.setAdapter(orderAdapter);
         ui.btnRefreshOrders.setOnClickListener(v -> fetchOrders());
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
     }
 
     private void fetchProfile() {

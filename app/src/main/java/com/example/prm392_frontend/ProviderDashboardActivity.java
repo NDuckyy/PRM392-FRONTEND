@@ -7,6 +7,7 @@ import android.view.View;
 import android.widget.Toast;
 
 import androidx.appcompat.app.AlertDialog;
+import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
 
 import com.example.prm392_frontend.api.ApiClient;
@@ -24,7 +25,7 @@ import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
 
-public class ProviderDashboardActivity extends BaseActivity implements ProviderProductAdapter.OnProductActionListener {
+public class ProviderDashboardActivity extends AppCompatActivity implements ProviderProductAdapter.OnProductActionListener {
     private static final String TAG = "ProviderDashboard";
     private static final int REQUEST_CODE_ADD_PRODUCT = 1001;
     private static final int REQUEST_CODE_EDIT_PRODUCT = 1002;
@@ -72,6 +73,11 @@ public class ProviderDashboardActivity extends BaseActivity implements ProviderP
         });
 
         binding.btnRefresh.setOnClickListener(v -> loadProducts());
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
     }
 
     private void loadProducts() {

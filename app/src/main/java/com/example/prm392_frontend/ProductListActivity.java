@@ -30,8 +30,12 @@ import com.example.prm392_frontend.models.ApiResponse;
 import com.example.prm392_frontend.models.CategoryResponse;
 import com.example.prm392_frontend.models.ProductResponse;
 import com.example.prm392_frontend.utils.AuthHelper;
+import com.example.prm392_frontend.utils.DrawerNavigationHelper;
 import com.example.prm392_frontend.utils.ProductMapper;
 import com.google.android.material.appbar.MaterialToolbar;
+import com.google.android.material.navigation.NavigationView;
+
+import androidx.drawerlayout.widget.DrawerLayout;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -63,6 +67,10 @@ public class ProductListActivity extends AppCompatActivity {
 
     private final List<Integer> availableBanners = new ArrayList<>();
 
+    // Drawer
+    private DrawerLayout drawerLayout;
+    private NavigationView navigationView;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -70,15 +78,19 @@ public class ProductListActivity extends AppCompatActivity {
 
         authHelper = new AuthHelper(this);
 
+        // Setup drawer
+        drawerLayout = findViewById(R.id.drawer_layout);
+        navigationView = findViewById(R.id.nav_view);
+
         toolbar = findViewById(R.id.toolbar);
         recyclerView = findViewById(R.id.products_recycler_view);
         progressBar = findViewById(R.id.progress_bar);
         errorText = findViewById(R.id.error_text);
 
-        recyclerView.setLayoutManager(new GridLayoutManager(this, 2));
+        // Setup drawer navigation
+        DrawerNavigationHelper.setup(this, drawerLayout, navigationView, toolbar);
 
-        // Setup bottom navigation
-        setupBottomNavigation();
+        recyclerView.setLayoutManager(new GridLayoutManager(this, 2));
 
         allProducts = new ArrayList<>();
         filteredProducts = new ArrayList<>();
@@ -128,44 +140,12 @@ public class ProductListActivity extends AppCompatActivity {
         availableBanners.add(R.drawable.banner_50_discount);
     }
 
-    private void setupBottomNavigation() {
-        com.google.android.material.bottomnavigation.BottomNavigationView navigationBar = findViewById(R.id.navigation_bar);
-
-        if (navigationBar != null) {
-            navigationBar.setSelectedItemId(R.id.nav_products);
-
-            navigationBar.setOnItemSelectedListener(item -> {
-                int itemId = item.getItemId();
-
-                if (itemId == R.id.nav_home) {
-                    String role = authHelper.getRole();
-                    if ("PROVIDER".equalsIgnoreCase(role)) {
-                        navigateToActivity(ProviderDashboardActivity.class);
-                    }
-                    // For non-provider, home is products list, already here
-                    return true;
-                } else if (itemId == R.id.nav_products) {
-                    // Already on products list
-                    return true;
-                } else if (itemId == R.id.nav_cart) {
-                    navigateToActivity(CartActivity.class);
-                    return true;
-                } else if (itemId == R.id.nav_messages) {
-                    navigateToActivity(ConversationListActivity.class);
-                    return true;
-                } else if (itemId == R.id.nav_profile) {
-                    navigateToActivity(UserProfileActivity.class);
-                    return true;
-                }
-                return false;
-            });
+    @Override
+    public void onBackPressed() {
+        if (DrawerNavigationHelper.onBackPressed(drawerLayout)) {
+            return;
         }
-    }
-
-    private void navigateToActivity(Class<?> activityClass) {
-        Intent intent = new Intent(this, activityClass);
-        intent.setFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
-        startActivity(intent);
+        super.onBackPressed();
     }
 
     @Override
@@ -219,7 +199,7 @@ public class ProductListActivity extends AppCompatActivity {
     }
 
     private void setupToolbar() {
-        setSupportActionBar(toolbar);
+        // Note: setSupportActionBar is called in DrawerNavigationHelper.setup()
         toolbar.setOnMenuItemClickListener(item -> {
             int id = item.getItemId();
             if (id == R.id.action_sort) {
