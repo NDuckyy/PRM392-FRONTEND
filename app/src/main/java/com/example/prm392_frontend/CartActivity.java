@@ -111,14 +111,8 @@ public class CartActivity extends AppCompatActivity implements CartAdapter.CartA
     private void initComponents() {
         authHelper = new AuthHelper(this);
     }
-
-    // ====================================================================
-    // SỬA LỖI GỐC NẰM Ở ĐÂY
-    // ====================================================================
     private void setupRecyclerView() {
         recyclerViewCartItems.setLayoutManager(new LinearLayoutManager(this));
-        // Sửa lại cách khởi tạo adapter để gọi đúng constructor
-        // `this` ở đây chính là `CartActivity` đang implement `CartAdapterListener`
         cartAdapter = new CartAdapter(this);
         recyclerViewCartItems.setAdapter(cartAdapter);
     }
@@ -138,9 +132,6 @@ public class CartActivity extends AppCompatActivity implements CartAdapter.CartA
     @Override
     protected void onResume() {
         super.onResume();
-
-        // Gọi fetchCartData() mỗi khi activity quay trở lại
-        // Điều này đảm bảo dữ liệu giỏ hàng luôn được làm mới
         fetchCartData();
     }
 
@@ -156,7 +147,6 @@ public class CartActivity extends AppCompatActivity implements CartAdapter.CartA
         ApiClient.getCartApi().getCurrentUserCart(authHeader).enqueue(new Callback<ApiResponse<CartResponse>>() {
             @Override
             public void onResponse(Call<ApiResponse<CartResponse>> call, Response<ApiResponse<CartResponse>> response) {
-                // Đây là nơi lỗi được kích hoạt, nhưng nguyên nhân là do adapter khởi tạo sai
                 if (response.isSuccessful() && response.body() != null && response.body().isSuccess()) {
                     CartResponse cartResponse = response.body().getData();
                     if (cartResponse != null && cartResponse.getCartItemResponses() != null && !cartResponse.getCartItemResponses().isEmpty()) {

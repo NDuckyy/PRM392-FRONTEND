@@ -12,6 +12,8 @@ import android.view.View;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
+
+import androidx.activity.OnBackPressedCallback;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
@@ -19,10 +21,6 @@ import androidx.appcompat.widget.SearchView;
 import androidx.core.app.ActivityCompat;
 import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
-import android.Manifest;
-import android.content.pm.PackageManager;
-import android.os.Build;
-import androidx.core.app.ActivityCompat;
 
 import com.example.prm392_frontend.utils.BadgeHelper;
 import com.example.prm392_frontend.api.ApiClient;
@@ -36,6 +34,7 @@ import com.google.android.material.appbar.MaterialToolbar;
 import com.google.android.material.navigation.NavigationView;
 
 import androidx.drawerlayout.widget.DrawerLayout;
+import androidx.tracing.Trace;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -109,7 +108,6 @@ public class ProductListActivity extends AppCompatActivity {
 
         initializeBanners();
 
-        // >>> ADD: xin quyền POST_NOTIFICATIONS (Android 13+) rồi đồng bộ badge
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
                 ActivityCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS)
                         != PackageManager.PERMISSION_GRANTED) {
@@ -119,7 +117,6 @@ public class ProductListActivity extends AppCompatActivity {
                     REQ_POST_NOTI
             );
         } else {
-            // Đồng bộ badge khi vào app (mock/API tuỳ BadgeHelper)
             BadgeHelper.USE_MOCK = false; // tắt mock, gọi API thật
 
             AuthHelper auth = new AuthHelper(getApplicationContext());
@@ -127,10 +124,19 @@ public class ProductListActivity extends AppCompatActivity {
 
             BadgeHelper.syncFromApi(this, token);
         }
-        // <<< END ADD
 
-        // Fetch categories first, then products
         fetchCategoriesFromApi();
+        getOnBackPressedDispatcher().addCallback(this, new OnBackPressedCallback(true) {
+            @Override
+            public void handleOnBackPressed() {
+                if (DrawerNavigationHelper.onBackPressed(drawerLayout)) {
+                    return;
+                }
+                setEnabled(false);
+                getOnBackPressedDispatcher().onBackPressed();
+            }
+        });
+
     }
 
     private void initializeBanners() {
@@ -140,13 +146,6 @@ public class ProductListActivity extends AppCompatActivity {
         availableBanners.add(R.drawable.banner_50_discount);
     }
 
-    @Override
-    public void onBackPressed() {
-        if (DrawerNavigationHelper.onBackPressed(drawerLayout)) {
-            return;
-        }
-        super.onBackPressed();
-    }
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {

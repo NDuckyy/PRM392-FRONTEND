@@ -8,7 +8,6 @@ import android.content.pm.PackageManager;
 import android.os.Build;
 import android.os.Bundle;
 import android.view.View;
-import android.widget.ArrayAdapter;
 import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
@@ -16,14 +15,8 @@ import androidx.core.app.ActivityCompat;
 import androidx.core.app.NotificationCompat;
 import androidx.core.app.NotificationManagerCompat;
 
-import com.example.prm392_frontend.api.ApiClient;
 import com.example.prm392_frontend.databinding.ActivityRegisterBinding;
-import com.example.prm392_frontend.models.AuthResponse;
 import com.example.prm392_frontend.models.RegisterRequest;
-
-import retrofit2.Call;
-import retrofit2.Callback;
-import retrofit2.Response;
 
 public class RegisterActivity extends AppCompatActivity {
     private ActivityRegisterBinding binding;
@@ -38,13 +31,11 @@ public class RegisterActivity extends AppCompatActivity {
         binding = ActivityRegisterBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
 
-        setupRoleDropdown();
         setupListeners();
         createOtpNotificationChannel();
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             if (ActivityCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS)
                     != PackageManager.PERMISSION_GRANTED) {
-                // Yêu cầu người dùng cấp quyền
                 ActivityCompat.requestPermissions(this,
                         new String[]{Manifest.permission.POST_NOTIFICATIONS}, 1);
             }
@@ -86,17 +77,6 @@ public class RegisterActivity extends AppCompatActivity {
     }
 
 
-    private void setupRoleDropdown() {
-        String[] roles = {"CUSTOMER", "SELLER", "ADMIN"};
-        ArrayAdapter<String> adapter = new ArrayAdapter<>(
-                this,
-                android.R.layout.simple_dropdown_item_1line,
-                roles
-        );
-        binding.actvRole.setAdapter(adapter);
-        binding.actvRole.setText("CUSTOMER", false);
-    }
-
     private void setupListeners() {
         binding.btnRegister.setOnClickListener(v -> handleRegister());
 
@@ -111,7 +91,7 @@ public class RegisterActivity extends AppCompatActivity {
         String password = binding.etPassword.getText().toString().trim();
         String phoneNumber = binding.etPhoneNumber.getText().toString().trim();
         String address = binding.etAddress.getText().toString().trim();
-        String role = binding.actvRole.getText().toString().trim();
+        String role = "CUSTOMER";
 
         if (username.isEmpty()) {
             binding.tilUsername.setError("Username is required");
@@ -192,7 +172,6 @@ public class RegisterActivity extends AppCompatActivity {
         binding.etPassword.setEnabled(!isLoading);
         binding.etPhoneNumber.setEnabled(!isLoading);
         binding.etAddress.setEnabled(!isLoading);
-        binding.actvRole.setEnabled(!isLoading);
         binding.tvLogin.setEnabled(!isLoading);
     }
 
