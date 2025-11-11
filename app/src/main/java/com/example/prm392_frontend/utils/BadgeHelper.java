@@ -110,11 +110,8 @@ public class BadgeHelper {
                 try {
                     String body = resp.body().string();
                     JSONObject json = new JSONObject(body);
-
-                    // API trả: { "code":200, "message":"...", "data":2 }
                     int count = json.optInt("data", 0);
                     updateCartBadge(ctx, count);
-
                 } catch (Exception e) {
                     e.printStackTrace();
                 }

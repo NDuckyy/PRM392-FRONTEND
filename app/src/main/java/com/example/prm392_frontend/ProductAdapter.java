@@ -1,8 +1,7 @@
 package com.example.prm392_frontend;
 
 import android.graphics.Color;
-import android.view.LayoutInflater;
-import android.view.View;
+import android.view.LayoutInflater;import android.view.View;
 import android.view.ViewGroup;
 import android.view.animation.Animation;
 import android.view.animation.AnimationUtils;
@@ -31,6 +30,11 @@ public class ProductAdapter extends RecyclerView.Adapter<ProductAdapter.ProductV
         this.listener = listener;
     }
 
+    public void updateData(List<Product> newProductList) {
+        this.products.clear();
+        this.products.addAll(newProductList);
+        notifyDataSetChanged();
+    }
     @NonNull
     @Override
     public ProductViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
@@ -50,9 +54,6 @@ public class ProductAdapter extends RecyclerView.Adapter<ProductAdapter.ProductV
         if (product.hasBanner()) {
             holder.productBanner.setVisibility(View.VISIBLE);
 
-            int yellowBackgroundColor = Color.parseColor("#FFD100");
-            int tolerance = 30;
-
             Glide.with(holder.itemView.getContext())
                     .load(product.getBannerResourceId())
                     .into(holder.productBanner);
@@ -61,11 +62,8 @@ public class ProductAdapter extends RecyclerView.Adapter<ProductAdapter.ProductV
             holder.productBanner.setVisibility(View.GONE);
         }
 
-
         holder.itemView.setOnClickListener(v -> listener.onProductClick(product));
     }
-
-
 
     private void setAnimation(View viewToAnimate, int position) {
         if (position > lastPosition) {
@@ -84,7 +82,6 @@ public class ProductAdapter extends RecyclerView.Adapter<ProductAdapter.ProductV
         private ImageView productImage;
         private TextView productName;
         private TextView productPrice;
-
         private ImageView productBanner;
 
         public ProductViewHolder(@NonNull View itemView) {
